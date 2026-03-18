@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scan Class Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+  <h1>📱 Scan Class Pro</h1>
+
+  <div class="menu">
+    <button onclick="startScan('checkin')">✅ เช็คชื่อ</button>
+    <button onclick="startScan('score')">📝 เก็บคะแนน</button>
+  </div>
+
+  <div class="form">
+    <label>เลือกงาน:</label>
+    <select id="assignment"></select>
+
+    <label>คะแนน:</label>
+    <input type="number" id="score" placeholder="ใส่คะแนน">
+  </div>
+
+  <div id="reader"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
