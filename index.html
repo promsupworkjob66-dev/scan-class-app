@@ -1,60 +1,126 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scan Class Pro</title>
-  <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    /* เพิ่ม Style เล็กน้อยเพื่อให้ช่องสแกนดูดีขึ้น */
-    #reader {
-      width: 100%;
-      max-width: 500px;
-      margin: 20px auto;
-      border: 2px solid #333;
-      border-radius: 10px;
-      overflow: hidden;
+    body { font-family: sans-serif; text-align: center; background:#f4f6f8; }
+    h1 { color:#2c3e50; }
+    #reader { width:300px; margin:auto; }
+    button {
+      padding:10px 20px; margin:5px;
+      border:none; border-radius:10px;
+      font-size:16px; cursor:pointer;
     }
-    .menu button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 5px;
+    .active { background:#27ae60; color:#fff; }
+    .box {
+      margin-top:15px;
+      padding:15px;
+      border-radius:10px;
+      font-size:18px;
     }
-    .form {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f4f4f4;
-      border-radius: 8px;
-    }
+    .success { background:#d4edda; color:#155724; }
+    .error { background:#f8d7da; color:#721c24; }
   </style>
 </head>
 
 <body>
-  <div style="text-align: center; padding: 20px;">
-    <h1>📱 Scan Class Pro</h1>
 
-    <div class="menu">
-      <button onclick="startScan('checkin')">✅ เช็คชื่อ</button>
-      <button onclick="startScan('score')">📝 เก็บคะแนน</button>
-    </div>
+<h1>📱 Scan Class Pro</h1>
 
-    <div class="form">
-      <div>
-        <label for="assignment">เลือกงาน:</label>
-        <select id="assignment"></select>
-      </div>
-      
-      <div style="margin-top: 10px;">
-        <label for="score">คะแนน:</label>
-        <input type="number" id="score" placeholder="ใส่คะแนน" value="0">
-      </div>
-    </div>
+<div>
+  <button id="btnCheckin" class="active">เช็คชื่อ</button>
+  <button id="btnScore">ให้คะแนน</button>
+</div>
 
-    <div id="reader"></div>
-  </div>
+<div id="reader"></div>
 
-  <script src="script.js"></script>
+<div id="result" class="box"></div>
+
+<audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script>
+const WEB_APP_URL = "PUT_YOUR_WEB_APP_URL_HERE";
+
+let mode = "checkin";
+
+// ปุ่มเลือกโหมด
+document.getElementById("btnCheckin").onclick = () => {
+  mode = "checkin";
+  setActive("btnCheckin");
+};
+
+document.getElementById("btnScore").onclick = () => {
+  mode = "score";
+  setActive("btnScore");
+};
+
+function setActive(id) {
+  document.getElementById("btnCheckin").classList.remove("active");
+  document.getElementById("btnScore").classList.remove("active");
+  document.getElementById(id).classList.add("active");
+}
+
+// สแกนสำเร็จ
+function onScanSuccess(decodedText) {
+
+  let studentId = decodedText;
+
+  if (decodedText.startsWith("http")) {
+    const url = new URL(decodedText);
+    studentId = url.searchParams.get("id");
+  }
+
+  let body = {
+    action: mode,
+    student_id: studentId
+  };
+
+  if (mode === "score") {
+    body.assignment = prompt("ชื่องาน:");
+    body.score = prompt("คะแนน:");
+  }
+
+  fetch(WEB_APP_URL, {
+    method: "POST",
+    body: new URLSearchParams(body)
+  })
+  .then(res => res.json())
+  .then(data => {
+    showResult(data);
+  });
+}
+
+// แสดงผล + เสียง
+function showResult(data) {
+  const box = document.getElementById("result");
+  const beep = document.getElementById("beep");
+
+  beep.play();
+
+  if (data.status === "success") {
+    box.className = "box success";
+    box.innerHTML = "✅ " + data.name + "<br>" + data.message;
+  }
+  else if (data.status === "duplicate") {
+    box.className = "box error";
+    box.innerHTML = "❌ " + data.name + "<br>เช็คชื่อซ้ำแล้ว";
+  }
+  else {
+    box.className = "box error";
+    box.innerHTML = "⚠️ " + data.message;
+  }
+}
+
+// เริ่มกล้อง
+const html5QrCode = new Html5Qrcode("reader");
+html5QrCode.start(
+  { facingMode: "environment" },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+);
+</script>
+
 </body>
 </html>
