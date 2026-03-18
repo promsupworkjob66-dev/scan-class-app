@@ -1,4 +1,4 @@
-const API_URL = "ใส่_URL_AppsScript_ของคุณ";
+const API_URL = "https://script.google.com/macros/s/AKfycbyOp4j-k-u9u1ve6W7T7c11_HEAtgbYdckeYPmPgAw/dev";
 
 const assignmentSelect = document.getElementById("assignment");
 
