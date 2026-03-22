@@ -135,3 +135,24 @@ body {
     background: white !important;
     border-top: 1px solid #e2e8f0;
 }
+/* Animation สำหรับโหมดครู */
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ปรับแต่งส่วนโหมดครูให้เด่นชัด */
+#teacher-section {
+    border: 2px solid #ffc107;
+    background-color: #fffdf5;
+    position: relative;
+    z-index: 1020; /* ให้อยู่เหนือส่วนอื่น */
+}
+
+.main-card {
+    transition: all 0.3s ease;
+}
