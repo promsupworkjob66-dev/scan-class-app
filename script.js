@@ -198,3 +198,71 @@ function updateChart(stats) {
         options: { plugins: { legend: { display: false } }, cutout: '75%' }
     });
 }
+
+// ฟังก์ชันบันทึกการตั้งค่าห้องเรียน
+async function saveSettings() {
+    const startTime = document.getElementById('start-time').value;
+    const lateLimit = document.getElementById('late-limit').value;
+    
+    const params = new URLSearchParams();
+    params.append('action', 'saveSettings');
+    params.append('classId', currentClassId);
+    params.append('startTime', startTime);
+    params.append('lateLimit', lateLimit);
+
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("บันทึกการตั้งค่าสำเร็จ!");
+    } catch (e) { alert("ล้มเหลวในการบันทึก"); }
+}
+
+// ฟังก์ชันเพิ่มใบงานใหม่เข้าไปใน Google Sheets
+async function addNewAssignment() {
+    const title = document.getElementById('new-assignment').value;
+    if (!title) return alert("กรุณากรอกชื่อใบงาน");
+
+    const params = new URLSearchParams();
+    params.append('action', 'addAssignment');
+    params.append('classId', currentClassId);
+    params.append('title', title);
+
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        document.getElementById('new-assignment').value = '';
+        alert("เพิ่มใบงานสำเร็จ!");
+        loadAssignments(currentClassId); // รีโหลดรายชื่อใบงานใน Dropdown
+    } catch (e) { alert("เพิ่มไม่สำเร็จ"); }
+}
+
+// ฟังก์ชันโหลดสรุปคะแนนสะสม (Dashboard)
+async function loadScoreSummary() {
+    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนครับ");
+    const tbody = document.getElementById('summary-body');
+    tbody.innerHTML = '<tr><td colspan="6">กำลังประมวลผลคะแนน...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_URL}?action=getScoreSummary&classId=${currentClassId}`);
+        const data = await response.json();
+        
+        let html = '';
+        data.forEach((student, index) => {
+            const progress = (student.submittedWorks / student.totalWorks) * 100 || 0;
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="text-start">${student.name}</td>
+                    <td><span class="badge bg-light text-dark border">${student.attendanceCount}</span></td>
+                    <td>${student.submittedWorks}/${student.totalWorks}</td>
+                    <td class="fw-bold text-primary">${student.totalScore}</td>
+                    <td>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: ${progress}%"></div>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+        tbody.innerHTML = html;
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-danger">ไม่สามารถโหลดข้อมูลสรุปได้</td></tr>';
+    }
+}
