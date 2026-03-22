@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzW0yvLrHr41GiHbetMOnRCzD214b2tnmWBcWn5WbFED3YBwmuKOsybEs7sm_2mFJgV/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxp_rDGDa_OQiQNaQIW2IZAUV1byHiv55dJEDNAbrzWt1wbY5hMAcAKM22OgS4kFW-M/exec";
 
 let html5QrCode;
 let comparisonChart;
