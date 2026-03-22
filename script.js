@@ -1,5 +1,5 @@
 // *** สำคัญมาก: เปลี่ยนลิงก์นี้เป็น URL Web App ของคุณครู ***
-const API_URL = "https://script.google.com/macros/s/AKfycb...ของคุณครู.../exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzhaCgLbPfToy3dR97HZbzgVPSm9IEdmVEwOsjryZHDCdzfwTLZNBrcwO9GZkERnrUo/exec";
 
 let html5QrCode;
 let myChart;
