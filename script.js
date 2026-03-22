@@ -7,17 +7,23 @@ let currentClassId = '';
 
 // ฟังก์ชันเลือกห้องเรียน
 function selectClass(classId) {
-    currentClassId = classId; // เก็บค่า ID ห้องไว้ใช้ตอนสแกน
+    currentClassId = classId;
     
-    // เปลี่ยนข้อความ "ยังไม่ได้เลือกห้องเรียน" ให้เป็นชื่อห้องที่เลือก
+    // 1. เปลี่ยนข้อความสถานะห้องเรียน
     const display = document.getElementById('selected-class');
     if (display) {
-        display.innerText = "กำลังจัดการห้อง: " + classId;
-        display.className = "status-badge bg-primary mb-3"; // เปลี่ยนสีจากเทาเป็นน้ำเงิน
+        // แปลงไอดี A1 เป็นชื่อที่เข้าใจง่าย (หรือจะโชว์เป็น ID เลยก็ได้ครับ)
+        let className = (classId === 'A1') ? 'ปวช.1' : (classId === 'A2' ? 'ปวช.2' : 'ปวช.3');
+        display.innerText = "กำลังจัดการห้อง: " + className;
+        display.className = "status-badge bg-primary mb-3"; // เปลี่ยนสีเป็นน้ำเงินเมื่อเลือกแล้ว
     }
     
-    // เรียกโหลดข้อมูลในตารางและกราฟของห้องนั้นมาแสดง
-    loadClassData(classId); 
+    // 2. ลบสีเน้น (active) จากปุ่มอื่น และเพิ่มให้ปุ่มที่กด
+    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
+    // (ถ้าคุณครูตั้งชื่อ Class ปุ่มให้ชัดเจน จะช่วยให้ใส่สีเน้นได้สวยขึ้นครับ)
+    
+    // 3. โหลดข้อมูล Dashboard
+    loadClassData(classId);
 }
     
     // อัปเดต UI ให้ครูรู้ว่าเลือกห้องไหน
