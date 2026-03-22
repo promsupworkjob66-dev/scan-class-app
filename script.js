@@ -7,11 +7,17 @@ let currentClassId = '';
 
 // ฟังก์ชันเลือกห้องเรียน
 function selectClass(classId) {
-    currentClassId = classId;
-    // ลบ class active ออกจากทุกปุ่มก่อน
-    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
-    // เพิ่ม class active ให้ปุ่มที่ถูกกด (ต้องหาทางระบุ Element นั้นๆ)
-    loadClassData(classId);
+    currentClassId = classId; // เก็บค่า ID ห้องไว้ใช้ตอนสแกน
+    
+    // เปลี่ยนข้อความ "ยังไม่ได้เลือกห้องเรียน" ให้เป็นชื่อห้องที่เลือก
+    const display = document.getElementById('selected-class');
+    if (display) {
+        display.innerText = "กำลังจัดการห้อง: " + classId;
+        display.className = "status-badge bg-primary mb-3"; // เปลี่ยนสีจากเทาเป็นน้ำเงิน
+    }
+    
+    // เรียกโหลดข้อมูลในตารางและกราฟของห้องนั้นมาแสดง
+    loadClassData(classId); 
 }
     
     // อัปเดต UI ให้ครูรู้ว่าเลือกห้องไหน
