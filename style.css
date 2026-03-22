@@ -1,58 +1,137 @@
-<style>
-    /* สไตล์เดิมของคุณครู */
-    .scroll-mt { scroll-margin-top: 80px; }
-    .main-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
-    }
+/* 1. กำหนดค่าสีหลักของระบบ */
+:root {
+    --primary-blue: #1e40af;
+    --light-blue: #3b82f6;
+    --bg-gray: #f8fafc;
+    --success-green: #10b981;
+    --warning-orange: #f59e0b;
+}
 
-    /* สไตล์ที่เพิ่มใหม่เพื่อความโปร */
-    .excel-zone {
-        background: #f8fff9; /* เขียวอ่อนๆ ให้ความรู้สึกเป็น Excel */
-        border: 2px dashed #28a745;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-    }
-    
-    .excel-zone:hover {
-        background: #f0fff4;
-        border-color: #1e7e34;
-        transform: translateY(-2px);
-    }
+/* 2. ตั้งค่าพื้นฐานและฟอนต์ */
+body {
+    font-family: 'Sarabun', sans-serif;
+    background-color: var(--bg-gray);
+    color: #334155;
+}
 
-    .btn-excel {
-        background-color: #217346; /* สีเขียว Microsoft Excel Official */
-        color: white;
-        font-weight: bold;
-        border: none;
-        padding: 10px 25px;
-        border-radius: 50px;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(33, 115, 70, 0.2);
-    }
+.navbar {
+    background-color: var(--primary-blue);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-    .btn-excel:hover {
-        background-color: #1a5c38;
-        color: #ffffff;
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(33, 115, 70, 0.3);
-    }
+/* 3. การตกแต่งการ์ดและปุ่มเลือกห้องเรียน */
+.main-card {
+    background: white;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
 
-    .btn-excel i {
-        margin-right: 8px;
-    }
+.card-btn {
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
 
-    /* Animation สำหรับโหลดข้อมูล */
-    @keyframes pulse-green {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+.card-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+
+/* สถานะ Active เมื่อเลือกห้องเรียน */
+.card-btn.active {
+    outline: 4px solid var(--primary-blue);
+    outline-offset: 2px;
+    transform: scale(1.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.bg-p6 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.bg-m1 { background: linear-gradient(135deg, #10b981, #047857); }
+.bg-m3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+/* 4. ส่วนของ Tabs สลับโหมด (เช็คชื่อ/ให้คะแนน) */
+#tab-att, #tab-score {
+    transition: all 0.3s;
+    font-size: 0.95rem;
+    user-select: none;
+}
+
+#tab-att:hover, #tab-score:hover {
+    background-color: #f1f5f9;
+}
+
+.border-bottom {
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+/* 5. กล้องสแกน QR Code */
+#reader {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+#reader video {
+    object-fit: cover;
+}
+
+/* 6. สถานะ Status Badges */
+.status-badge {
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: white;
+}
+
+/* 7. กราฟวงกลมและตัวเลขเปอร์เซ็นต์ */
+#total-percent {
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* 8. ตกแต่งตารางข้อมูล */
+.table th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+/* 9. เอฟเฟกต์ Fade In สำหรับโหมดให้คะแนน */
+.animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
     }
-    .status-loading {
-        animation: pulse-green 1.5s infinite;
-        color: #217346;
-        font-weight: bold;
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
     }
-</style>
+}
+
+/* แก้ไข UI ส่วนเกินของไลบรารีสแกน */
+#reader__dashboard {
+    padding: 10px !important;
+    background: white !important;
+    border-top: 1px solid #e2e8f0;
+}
