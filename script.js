@@ -1,6 +1,6 @@
 // 1. ตั้งค่า API URL และตัวแปรส่วนกลาง
 const API_URL = "https://script.google.com/macros/s/AKfycbxurRNi6a4opH2xthxqJ30u_ZFFoBSTY7F3DbV3x2oL8VM32TDsLveiTJxGMd3a_pjc/exec";
-const TEACHER_PIN = "1234"; // รหัสผ่านสำหรับโหมดครู
+const TEACHER_PIN = "1234"; 
 
 let html5QrCode;
 let myChart;
@@ -8,7 +8,7 @@ let comparisonChartObj;
 let currentClassId = ''; 
 let currentMode = 'attendance'; 
 
-// รายชื่อห้องเรียน (แนะนำให้ดึงจาก Sheets ในอนาคต แต่ตอนนี้ใช้แบบ Static ตามโครงสร้างที่ครูต้องการ)
+// รายชื่อห้องเรียน
 let classList = [
     { id: 'A1', name: '1/1', level: 'ปวช' },
     { id: 'A2', name: '2/1', level: 'ปวช' },
@@ -21,7 +21,8 @@ let classList = [
 
 window.onload = () => {
     loadComparisonChart();
-    filterLevel('ปวช'); // เริ่มต้นแสดงผลระดับ ปวช.
+    filterLevel('ปวช'); 
+    updateClassSelects(); // อัปเดตรายชื่อห้องในเมนูจัดการ (ลบห้อง)
 };
 
 // --- ฟังก์ชันหลัก (Core Functions) ---
@@ -29,19 +30,16 @@ window.onload = () => {
 function selectClass(classId) {
     currentClassId = classId;
     const display = document.getElementById('selected-class');
-    
-    // ค้นหาข้อมูลห้องจาก classList เพื่อเอาชื่อมาแสดง
     const room = classList.find(c => c.id === classId);
+    
     if (display && room) {
         display.innerText = `กำลังจัดการห้อง: ${room.level}.${room.name}`;
         display.className = "status-badge bg-primary mb-3";
     }
     
-    // ไฮไลท์ปุ่มที่เลือก
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
     
-    // โหลดข้อมูลที่เกี่ยวข้อง
     loadClassData(classId);
     loadAssignments(classId);
     loadScoreSummary();
@@ -49,12 +47,10 @@ function selectClass(classId) {
 }
 
 function filterLevel(level) {
-    // เปลี่ยนสถานะปุ่ม Tab ใน UI
     document.querySelectorAll('#levelTab .nav-link').forEach(btn => btn.classList.remove('active'));
     if (event && event.currentTarget) {
         event.currentTarget.classList.add('active');
     } else {
-        // กรณีเรียกใช้ตอนโหลดหน้าแรก
         const activeBtn = level === 'ปวช' ? document.getElementById('btn-level-pvc') : document.getElementById('btn-level-pvs');
         if(activeBtn) activeBtn.classList.add('active');
     }
@@ -64,7 +60,6 @@ function filterLevel(level) {
     container.innerHTML = '';
 
     const filtered = classList.filter(c => c.level === level);
-    
     if (filtered.length === 0) {
         container.innerHTML = '<div class="col-12 text-center text-muted">ยังไม่มีห้องเรียนในระดับนี้</div>';
         return;
@@ -104,6 +99,103 @@ function switchMode(mode) {
         tabAtt.classList.remove('text-muted');
         tabScore.classList.add('text-muted');
         tabScore.classList.remove('bg-light', 'text-primary');
+    }
+}
+
+// --- ฟังก์ชันการจัดการ (Export / Edit / Delete) ---
+
+// ฟังก์ชันอัปเดต List รายชื่อห้องในเมนูลบ
+function updateClassSelects() {
+    const deleteSelect = document.getElementById('delete-class-select');
+    if (!deleteSelect) return;
+    deleteSelect.innerHTML = '<option value="">-- เลือกห้องที่จะลบ --</option>';
+    classList.forEach(c => {
+        deleteSelect.innerHTML += `<option value="${c.id}">${c.level} ${c.name}</option>`;
+    });
+}
+
+// ระบบ Export Excel แยกชีตตามห้อง
+async function exportAllClassesToExcel() {
+    const status = document.getElementById('status');
+    const originalText = status.innerText;
+    if(status) status.innerText = "⏳ กำลังรวบรวมข้อมูลทุกห้องเรียน...";
+    
+    const wb = XLSX.utils.book_new();
+    
+    for (const room of classList) {
+        try {
+            const response = await fetch(`${API_URL}?action=getScoreSummary&classId=${room.id}`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                const excelData = data.map((s, index) => ({
+                    "ลำดับ": index + 1,
+                    "ชื่อ-นามสกุล": s.name,
+                    "เข้าเรียน (ครั้ง)": s.attendanceCount || 0,
+                    "ส่งงานแล้ว": s.submittedWorks,
+                    "งานทั้งหมด": s.totalWorks,
+                    "คะแนนรวม": s.totalScore
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const sheetName = `${room.level}${room.name}`.replace("/", "-");
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            }
+        } catch (e) {
+            console.error(`ไม่สามารถดึงข้อมูลห้อง ${room.id} ได้`, e);
+        }
+    }
+
+    const fileName = `สรุปคะแนน_ทุกห้องเรียน_${new Date().toLocaleDateString('th-TH')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    if(status) {
+        status.innerText = "✅ ดาวน์โหลดไฟล์เรียบร้อย!";
+        setTimeout(() => status.innerText = originalText, 3000);
+    }
+}
+
+async function editAssignment() {
+    const id = document.getElementById('edit-assignment-select').value;
+    const newTitle = document.getElementById('edit-assignment-title').value;
+    if (!id || !newTitle) return alert("กรุณาเลือกใบงานและใส่ชื่อใหม่");
+
+    if (confirm(`ยืนยันการเปลี่ยนชื่อเป็น: ${newTitle} ?`)) {
+        const params = new URLSearchParams();
+        params.append('action', 'editAssignment');
+        params.append('id', id);
+        params.append('newTitle', newTitle);
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("แก้ไขเรียบร้อย!");
+        loadAssignments(currentClassId);
+    }
+}
+
+async function deleteAssignment() {
+    const id = document.getElementById('edit-assignment-select').value;
+    if (!id) return alert("กรุณาเลือกใบงาน");
+
+    if (confirm("ยืนยันการลบใบงานนี้?")) {
+        const params = new URLSearchParams();
+        params.append('action', 'deleteAssignment');
+        params.append('id', id);
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("ลบใบงานสำเร็จ");
+        loadAssignments(currentClassId);
+    }
+}
+
+async function deleteClass() {
+    const classId = document.getElementById('delete-class-select').value;
+    if (!classId) return alert("กรุณาเลือกห้องที่จะลบ");
+
+    if (confirm("🚨 ยืนยันการลบห้องเรียน? ข้อมูลการเช็คชื่อจะหายไปด้วย")) {
+        const params = new URLSearchParams();
+        params.append('action', 'deleteClass');
+        params.append('classId', classId);
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("ลบห้องเรียนเรียบร้อย");
+        location.reload(); 
     }
 }
 
@@ -199,22 +291,18 @@ async function onScanSuccess(decodedText) {
 
 // --- ฟังก์ชันจัดการข้อมูล (API) ---
 
-async function addNewClass() {
-    const level = document.getElementById('new-level').value;
-    const name = document.getElementById('new-class-name').value;
-    if(!name) return alert("ระบุชื่อห้องด้วยครับ");
-
-    const params = new URLSearchParams();
-    params.append('action', 'addClass');
-    params.append('level', level);
-    params.append('name', name);
-
+async function loadAssignments(classId) {
+    const select = document.getElementById('assignment-select');
+    const editSelect = document.getElementById('edit-assignment-select');
     try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-        alert(`สร้างห้องเรียน ${level} ${name} สำเร็จ!`);
-        // ในระบบจริงควรดึงข้อมูลใหม่จาก Server แต่เบื้องต้น reload เพื่อความง่าย
-        location.reload(); 
-    } catch (e) { alert("ล้มเหลว"); }
+        const response = await fetch(`${API_URL}?action=getAssignments&classId=${classId}`);
+        const list = await response.json();
+        const options = list.map(item => `<option value="${item.id}">${item.title}</option>`).join('');
+        const placeholder = '<option value="">-- เลือกใบงาน --</option>';
+        
+        if(select) select.innerHTML = placeholder + options;
+        if(editSelect) editSelect.innerHTML = '<option value="">-- เลือกใบงานที่จะจัดการ --</option>' + options;
+    } catch (e) { console.error("โหลดใบงานล้มเหลว"); }
 }
 
 async function loadComparisonChart() {
@@ -244,32 +332,7 @@ async function loadComparisonChart() {
     } catch (e) { console.error("โหลดกราฟเปรียบเทียบไม่สำเร็จ", e); }
 }
 
-async function loadClassData(classId) {
-    const tableBody = document.getElementById('att-table');
-    if(!tableBody) return;
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">กำลังอัปเดต...</td></tr>';
-
-    try {
-        const response = await fetch(`${API_URL}?action=getDashboard&classId=${classId}`);
-        const res = await response.json();
-        let html = '';
-        if (res.attendanceList && res.attendanceList.length > 0) {
-            res.attendanceList.forEach(item => {
-                let badge = item.status === 'present' ? 'bg-success' : 'bg-warning';
-                let text = item.status === 'present' ? 'มาเรียน' : 'สาย';
-                html += `<tr><td>${item.name}</td><td>${item.time}</td><td><span class="badge ${badge}">${text}</span></td></tr>`;
-            });
-        } else {
-            html = '<tr><td colspan="3" class="text-center text-muted">ยังไม่มีข้อมูลวันนี้</td></tr>';
-        }
-        tableBody.innerHTML = html;
-        updateChart(res.stats);
-    } catch (e) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">โหลดล้มเหลว</td></tr>';
-    }
-}
-
-// --- ฟังก์ชันเสริมอื่นๆ ---
+// --- ฟังก์ชันเสริม ---
 
 function playBeep() {
     const beep = document.getElementById('beep-sound');
