@@ -19,15 +19,19 @@
     </nav>
 
     <div class="container mt-4">
-        <div class="row g-3 mb-4">
-            <div class="col-4"><div class="card card-btn bg-p6" onclick="loadClassData('A1')">ป.6/1</div></div>
-            <div class="col-4"><div class="card card-btn bg-m1" onclick="loadClassData('A2')">ม.1/2</div></div>
-            <div class="col-4"><div class="card card-btn bg-m3" onclick="loadClassData('A3')">ม.3/1</div></div>
+        <div class="row g-3 mb-2">
+            <div class="col-4"><div class="card card-btn bg-p6 text-center p-3" style="cursor:pointer;" onclick="selectClass('A1')">ป.6/1</div></div>
+            <div class="col-4"><div class="card card-btn bg-m1 text-center p-3" style="cursor:pointer;" onclick="selectClass('A2')">ม.1/2</div></div>
+            <div class="col-4"><div class="card card-btn bg-m3 text-center p-3" style="cursor:pointer;" onclick="selectClass('A3')">ม.3/1</div></div>
+        </div>
+
+        <div class="text-center mb-3">
+            <div id="selected-class" class="status-badge bg-secondary">ยังไม่ได้เลือกห้องเรียน</div>
         </div>
 
         <div class="main-card p-4 mb-4">
             <h5 class="text-primary fw-bold mb-3 text-center">📷 ระบบสแกนเช็คชื่อ / ส่งงาน</h5>
-            <div id="reader" class="mx-auto mb-3"></div>
+            <div id="reader" class="mx-auto mb-3" style="max-width: 400px; overflow: hidden; border-radius: 15px;"></div>
             <div id="status" class="status-badge bg-secondary mb-3">สถานะกล้อง: พร้อมใช้งาน</div>
             <div class="text-center">
                 <button class="btn btn-primary px-4 me-2" onclick="startCamera()">เปิดกล้อง</button>
@@ -38,11 +42,18 @@
         <div class="row">
             <div class="col-md-7 mb-4">
                 <div class="main-card p-3 h-100">
-                    <h6 class="fw-bold border-bottom pb-2">เช็คชื่อนักเรียนล่าสุด</h6>
+                    <h6 class="fw-bold border-bottom pb-2">เช็คชื่อนักเรียนล่าสุด (10 คน)</h6>
                     <div class="table-responsive">
                         <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อ-นามสกุล</th>
+                                    <th>เวลา</th>
+                                    <th>สถานะ</th>
+                                </tr>
+                            </thead>
                             <tbody id="att-table">
-                                <tr><td class="text-center text-muted">กรุณาเลือกห้องเรียน</td></tr>
+                                <tr><td colspan="3" class="text-center text-muted">กรุณาเลือกห้องเรียนด้านบน</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -50,9 +61,11 @@
             </div>
             <div class="col-md-5 mb-4">
                 <div class="main-card p-3 h-100 text-center">
-                    <h6 class="fw-bold mb-3">ภาพรวมการเข้าเรียน</h6>
-                    <canvas id="attendanceChart"></canvas>
-                    <div id="total-percent" class="mt-2 fw-bold fs-4 text-primary"></div>
+                    <h6 class="fw-bold mb-3">ภาพรวมการเข้าเรียนวันนี้</h6>
+                    <div style="position: relative; height:250px;">
+                        <canvas id="attendanceChart"></canvas>
+                        <div id="total-percent" style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: bold; color: #1e40af;">0%</div>
+                    </div>
                 </div>
             </div>
         </div>
