@@ -1,126 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Scan Class Pro</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    body { font-family: sans-serif; text-align: center; background:#f4f6f8; }
-    h1 { color:#2c3e50; }
-    #reader { width:300px; margin:auto; }
-    button {
-      padding:10px 20px; margin:5px;
-      border:none; border-radius:10px;
-      font-size:16px; cursor:pointer;
-    }
-    .active { background:#27ae60; color:#fff; }
-    .box {
-      margin-top:15px;
-      padding:15px;
-      border-radius:10px;
-      font-size:18px;
-    }
-    .success { background:#d4edda; color:#155724; }
-    .error { background:#f8d7da; color:#721c24; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T.Nuch SmartCom - Scan Class Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">T.Nuch SmartCom</span>
+            <span class="text-white-50">ครูนุช | ออนไลน์</span>
+        </div>
+    </nav>
 
-<h1>📱 Scan Class Pro</h1>
+    <div class="container mt-4">
+        <div class="row g-3 mb-4">
+            <div class="col-4"><div class="card card-btn bg-p6" onclick="loadClassData('A1')">ป.6/1</div></div>
+            <div class="col-4"><div class="card card-btn bg-m1" onclick="loadClassData('A2')">ม.1/2</div></div>
+            <div class="col-4"><div class="card card-btn bg-m3" onclick="loadClassData('A3')">ม.3/1</div></div>
+        </div>
 
-<div>
-  <button id="btnCheckin" class="active">เช็คชื่อ</button>
-  <button id="btnScore">ให้คะแนน</button>
-</div>
+        <div class="main-card p-4 mb-4">
+            <h5 class="text-primary fw-bold mb-3 text-center">📷 ระบบสแกนเช็คชื่อ / ส่งงาน</h5>
+            <div id="reader" class="mx-auto mb-3"></div>
+            <div id="status" class="status-badge bg-secondary mb-3">สถานะกล้อง: พร้อมใช้งาน</div>
+            <div class="text-center">
+                <button class="btn btn-primary px-4 me-2" onclick="startCamera()">เปิดกล้อง</button>
+                <button class="btn btn-outline-danger" onclick="stopCamera()">ปิดกล้อง</button>
+            </div>
+        </div>
 
-<div id="reader"></div>
+        <div class="row">
+            <div class="col-md-7 mb-4">
+                <div class="main-card p-3 h-100">
+                    <h6 class="fw-bold border-bottom pb-2">เช็คชื่อนักเรียนล่าสุด</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <tbody id="att-table">
+                                <tr><td class="text-center text-muted">กรุณาเลือกห้องเรียน</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5 mb-4">
+                <div class="main-card p-3 h-100 text-center">
+                    <h6 class="fw-bold mb-3">ภาพรวมการเข้าเรียน</h6>
+                    <canvas id="attendanceChart"></canvas>
+                    <div id="total-percent" class="mt-2 fw-bold fs-4 text-primary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div id="result" class="box"></div>
-
-<audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-
-<script>
-const WEB_APP_URL = "PUT_YOUR_WEB_APP_URL_HERE";
-
-let mode = "checkin";
-
-// ปุ่มเลือกโหมด
-document.getElementById("btnCheckin").onclick = () => {
-  mode = "checkin";
-  setActive("btnCheckin");
-};
-
-document.getElementById("btnScore").onclick = () => {
-  mode = "score";
-  setActive("btnScore");
-};
-
-function setActive(id) {
-  document.getElementById("btnCheckin").classList.remove("active");
-  document.getElementById("btnScore").classList.remove("active");
-  document.getElementById(id).classList.add("active");
-}
-
-// สแกนสำเร็จ
-function onScanSuccess(decodedText) {
-
-  let studentId = decodedText;
-
-  if (decodedText.startsWith("http")) {
-    const url = new URL(decodedText);
-    studentId = url.searchParams.get("id");
-  }
-
-  let body = {
-    action: mode,
-    student_id: studentId
-  };
-
-  if (mode === "score") {
-    body.assignment = prompt("ชื่องาน:");
-    body.score = prompt("คะแนน:");
-  }
-
-  fetch(WEB_APP_URL, {
-    method: "POST",
-    body: new URLSearchParams(body)
-  })
-  .then(res => res.json())
-  .then(data => {
-    showResult(data);
-  });
-}
-
-// แสดงผล + เสียง
-function showResult(data) {
-  const box = document.getElementById("result");
-  const beep = document.getElementById("beep");
-
-  beep.play();
-
-  if (data.status === "success") {
-    box.className = "box success";
-    box.innerHTML = "✅ " + data.name + "<br>" + data.message;
-  }
-  else if (data.status === "duplicate") {
-    box.className = "box error";
-    box.innerHTML = "❌ " + data.name + "<br>เช็คชื่อซ้ำแล้ว";
-  }
-  else {
-    box.className = "box error";
-    box.innerHTML = "⚠️ " + data.message;
-  }
-}
-
-// เริ่มกล้อง
-const html5QrCode = new Html5Qrcode("reader");
-html5QrCode.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess
-);
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
