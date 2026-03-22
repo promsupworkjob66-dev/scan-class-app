@@ -58,7 +58,6 @@
                             </button>
                         </div>
                     </div>
-                    <small class="text-muted mt-1 d-block">*ระบบจะบันทึกคะแนนนี้ให้กับเด็กที่สแกนทุกคนในโหมดนี้</small>
                 </div>
 
                 <h5 class="text-primary fw-bold mb-3 text-center" id="mode-title">📷 สแกนเช็คชื่อเข้าเรียน</h5>
@@ -73,99 +72,99 @@
         </div>
 
         <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 text-center p-3">
-            <h2 id="total-percent" class="fw-bold text-primary mb-0">0%</h2>
-            <small class="text-muted">อัตราการมาเรียนวันนี้</small>
-            <div class="progress mt-2" style="height: 5px;">
-                <div id="percent-bar" class="progress-bar bg-primary" style="width: 0%"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0 p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0">⚙️ ตั้งค่าห้องเรียน (Teacher Settings)</h6>
-                <button class="btn btn-sm btn-outline-primary" onclick="saveSettings()">บันทึกการตั้งค่า</button>
-            </div>
-            <div class="row g-2">
-                <div class="col-6 col-md-3">
-                    <label class="small">เวลาเข้าเรียน</label>
-                    <input type="time" id="start-time" class="form-control form-control-sm" value="08:30">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label class="small">สายเกิน (นาที)</label>
-                    <input type="number" id="late-limit" class="form-control form-control-sm" value="15">
-                </div>
-                <div class="col-md-6">
-                    <label class="small">เพิ่มใบงานใหม่</label>
-                    <div class="input-group input-group-sm">
-                        <input type="text" id="new-assignment" class="form-control" placeholder="ชื่อใบงาน...">
-                        <button class="btn btn-primary" onclick="addNewAssignment()">เพิ่ม</button>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 text-center p-3 h-100">
+                    <h2 id="total-percent" class="fw-bold text-primary mb-0">0%</h2>
+                    <small class="text-muted">อัตราการมาเรียนวันนี้</small>
+                    <div class="progress mt-2" style="height: 5px;">
+                        <div id="percent-bar" class="progress-bar bg-primary" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="main-card p-3 mb-4 border-primary border-top-width-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold text-primary mb-0"><i class="bi bi-person-check-fill"></i> สรุปคะแนนสะสมรายบุคคล</h6>
-        <button class="btn btn-sm btn-info text-white" onclick="loadScoreSummary()">
-            <i class="bi bi-arrow-clockwise"></i> อัปเดตคะแนน
-        </button>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle text-center" id="score-summary-table">
-            <thead class="bg-light">
-                <tr>
-                    <th>ที่</th>
-                    <th class="text-start">ชื่อ-นามสกุล</th>
-                    <th>มาเรียน (ครั้ง)</th>
-                    <th>งานที่ส่ง</th>
-                    <th>คะแนนรวม</th>
-                    <th style="width: 100px;">ความคืบหน้า</th>
-                </tr>
-            </thead>
-            <tbody id="summary-body">
-                </tbody>
-        </table>
-    </div>
-</div>
-
-        <div class="row">
-            <div class="col-md-12 mb-4" id="dashboard-section">
-                <div class="main-card p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold text-primary mb-0"><i class="bi bi-table"></i> บันทึกการเข้าเรียนวันนี้</h6>
-                        <button class="btn btn-sm btn-success px-3" onclick="exportToExcel()">
-                            <i class="bi bi-file-earmark-excel"></i> ส่งออก Excel
-                        </button>
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0">⚙️ ตั้งค่าห้องเรียน (Teacher Settings)</h6>
+                        <button class="btn btn-sm btn-outline-primary" onclick="saveSettings()">บันทึก</button>
                     </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="att-table-main">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ชื่อ-นามสกุล</th>
-                                    <th>เวลา</th>
-                                    <th>สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="att-table">
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3">
+                            <label class="small">เวลาเข้าเรียน</label>
+                            <input type="time" id="start-time" class="form-control form-control-sm" value="08:30">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="small">สายเกิน (นาที)</label>
+                            <input type="number" id="late-limit" class="form-control form-control-sm" value="15">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small">เพิ่มใบงานใหม่</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="new-assignment" class="form-control" placeholder="ชื่อใบงาน...">
+                                <button class="btn btn-primary" onclick="addNewAssignment()">เพิ่ม</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-    </div> <audio id="beep-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
+        <div class="main-card p-3 mb-4 border-top-width-5 border-success">
+            <h6 class="fw-bold text-success mb-3"><i class="bi bi-bar-chart-line-fill"></i> เปรียบเทียบคะแนนเฉลี่ยแต่ละห้องเรียน</h6>
+            <canvas id="comparisonChart" style="max-height: 250px;"></canvas>
+        </div>
 
+        <div class="main-card p-3 mb-4 border-primary border-top-width-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-person-check-fill"></i> สรุปคะแนนสะสมรายบุคคล</h6>
+                <button class="btn btn-sm btn-info text-white" onclick="loadScoreSummary()">
+                    <i class="bi bi-arrow-clockwise"></i> อัปเดตคะแนน
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center" id="score-summary-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ที่</th>
+                            <th class="text-start">ชื่อ-นามสกุล</th>
+                            <th>มาเรียน</th>
+                            <th>งานที่ส่ง</th>
+                            <th>คะแนนรวม</th>
+                            <th style="width: 100px;">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body">
+                        <tr><td colspan="6" class="text-muted text-center">ยังไม่มีข้อมูลคะแนน</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="main-card p-3 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-table"></i> บันทึกการเข้าเรียนวันนี้</h6>
+                <button class="btn btn-sm btn-success px-3" onclick="exportToExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> ส่งออก Excel
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="att-table-main">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>เวลา</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-table">
+                        <tr><td colspan="3" class="text-center text-muted">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div> 
+
+    <audio id="beep-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
     <script src="script.js"></script>
 </body>
 </html>
