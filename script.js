@@ -1,5 +1,5 @@
 // 1. ตรวจสอบ URL: ต้องเป็นอันล่าสุดที่ Deploy และลงท้ายด้วย /exec
-const API_URL = "https://script.google.com/macros/s/AKfycbzvYYKyvrh_249-HYOajFJf4YmoVeJreor1RtSbvOllQrkhW8_Ika1XUER4c0MEvwWWqg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx2cevUhYHus5SN5yqjhjv7oWOmZ95sFr9aoFnybi7QD7wC_E3p7FtyJP30UgntN8j0SQ/exec";
 
 let html5QrCode;
 let myChart;
