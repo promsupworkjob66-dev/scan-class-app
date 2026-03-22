@@ -1,99 +1,61 @@
-/* ตั้งค่าพื้นฐาน */
-* {
-  box-sizing: border-box; /* ช่วยให้การคำนวณ padding ไม่ทำให้อุปกรณ์เพี้ยน */
-  margin: 0;
-  padding: 0;
+:root {
+    --primary-blue: #1e40af;
+    --light-blue: #3b82f6;
+    --bg-gray: #f8fafc;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-align: center;
-  background: #f0f2f5;
-  color: #333;
-  line-height: 1.6;
+    font-family: 'Sarabun', sans-serif;
+    background-color: var(--bg-gray);
+    color: #334155;
 }
 
-/* หัวข้อแอป */
-h1 {
-  background: #4CAF50;
-  color: white;
-  padding: 20px;
-  font-size: 1.5rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
+.navbar {
+    background-color: var(--primary-blue);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* เมนูปุ่มกด */
-.menu {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
+.main-card {
+    background: white;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.menu button {
-  flex: 1; /* ขยายปุ่มให้เท่ากัน */
-  max-width: 150px;
-  padding: 15px 10px;
-  font-size: 16px;
-  font-weight: bold;
-  border: none;
-  background: #2196F3;
-  color: white;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 0.1s, background 0.3s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.card-btn {
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
 }
 
-.menu button:active {
-  transform: scale(0.95); /* เอฟเฟกต์ตอนกดปุ่ม */
-  background: #1976D2;
+.card-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
 }
 
-/* ส่วนของฟอร์ม */
-.form {
-  background: white;
-  margin: 15px;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+.bg-p6 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.bg-m1 { background: linear-gradient(135deg, #10b981, #047857); }
+.bg-m3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-.form label {
-  font-weight: bold;
-  margin-top: 10px;
-  display: block;
-}
-
-input, select {
-  padding: 12px;
-  margin: 8px 0;
-  width: 100%;
-  max-width: 300px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px; /* ป้องกัน iOS ซูมหน้าจอตอนพิมพ์ */
-}
-
-/* ส่วนสแกนเนอร์ */
 #reader {
-  width: calc(100% - 30px); /* เว้นขอบข้างนิดหน่อย */
-  max-width: 400px;
-  margin: 20px auto;
-  border-radius: 15px;
-  overflow: hidden;
-  border: 3px solid #4CAF50;
-  background: white;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
 }
 
-/* ปรับแต่งปุ่มภายใน Html5Qrcode (ถ้ามีโผล่มา) */
-#reader button {
-  padding: 10px;
-  margin: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+.status-badge {
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: white;
 }
