@@ -8,6 +8,11 @@ let currentClassId = '';
 // ฟังก์ชันเลือกห้องเรียน
 function selectClass(classId) {
     currentClassId = classId;
+    // ลบ class active ออกจากทุกปุ่มก่อน
+    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
+    // เพิ่ม class active ให้ปุ่มที่ถูกกด (ต้องหาทางระบุ Element นั้นๆ)
+    loadClassData(classId);
+}
     
     // อัปเดต UI ให้ครูรู้ว่าเลือกห้องไหน
     const display = document.getElementById('selected-class');
