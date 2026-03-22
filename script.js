@@ -8,12 +8,20 @@ let allClassData = []; // เก็บรายชื่อห้องเรี
 
 // 1. ระบบปลดล็อกโหมดครู
 function unlockTeacherMode() {
-    const pass = prompt("กรุณากรอกรหัสผ่านเพื่อเข้าสู่โหมดครู:");
-    if (pass === "1234") { // เปลี่ยนรหัสผ่านตรงนี้ได้
-        document.getElementById('teacher-section').style.display = 'block';
-        document.getElementById('teacher-section').scrollIntoView({ behavior: 'smooth' });
+    // 1. ถามรหัสผ่าน
+    const pass = prompt("กรุณากรอกรหัสผ่านผู้สอน (Teacher Password):");
+    
+    // 2. ตรวจสอบรหัส (เปลี่ยน '1234' เป็นรหัสที่ครูนุชต้องการ)
+    if (pass === "1234") {
+        const section = document.getElementById('teacher-section');
+        section.style.display = 'block'; // สั่งให้แสดงผล
+        
+        // 3. เลื่อนหน้าจอไปที่โหมดครูอัตโนมัติ
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        alert("🔓 ปลดล็อกโหมดครูผู้สอนเรียบร้อย");
     } else {
-        alert("รหัสผ่านไม่ถูกต้อง!");
+        alert("❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่");
     }
 }
 
