@@ -18,60 +18,153 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row g-3 mb-2">
-        <div class="col-4"><div class="card card-btn bg-p6 text-center p-3" onclick="selectClass('A1')">ปวช.1</div></div>
-        <div class="col-4"><div class="card card-btn bg-m1 text-center p-3" onclick="selectClass('A2')">ปวช.2</div></div>
-        <div class="col-4"><div class="card card-btn bg-m3 text-center p-3" onclick="selectClass('A3')">ปวช.3</div></div>
-</div>
-    </div>
+<div class="container mt-4">
+        <div class="row g-3 mb-3">
+            <div class="col-4"><div class="card card-btn bg-p6 text-center p-3" onclick="selectClass('A1')">ปวช.1</div></div>
+            <div class="col-4"><div class="card card-btn bg-m1 text-center p-3" onclick="selectClass('A2')">ปวช.2</div></div>
+            <div class="col-4"><div class="card card-btn bg-m3 text-center p-3" onclick="selectClass('A3')">ปวช.3</div></div>
+        </div>
 
         <div class="text-center mb-3">
             <div id="selected-class" class="status-badge bg-secondary">ยังไม่ได้เลือกห้องเรียน</div>
         </div>
 
-        <div class="main-card p-4 mb-4">
-            <h5 class="text-primary fw-bold mb-3 text-center">📷 ระบบสแกนเช็คชื่อ / ส่งงาน</h5>
-            <div id="reader" class="mx-auto mb-3" style="max-width: 400px; overflow: hidden; border-radius: 15px;"></div>
-            <div id="status" class="status-badge bg-secondary mb-3">สถานะกล้อง: พร้อมใช้งาน</div>
-            <div class="text-center">
-                <button class="btn btn-primary px-4 me-2" onclick="startCamera()">เปิดกล้อง</button>
-                <button class="btn btn-outline-danger" onclick="stopCamera()">ปิดกล้อง</button>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-7 mb-4">
-                <div class="main-card p-3 h-100">
-                    <h6 class="fw-bold border-bottom pb-2">เช็คชื่อนักเรียนล่าสุด (10 คน)</h6>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>ชื่อ-นามสกุล</th>
-                                    <th>เวลา</th>
-                                    <th>สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="att-table">
-                                <tr><td colspan="3" class="text-center text-muted">กรุณาเลือกห้องเรียนด้านบน</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+        <div class="main-card mb-4 overflow-hidden">
+            <div class="d-flex border-bottom">
+                <div id="tab-att" class="flex-fill text-center p-3 fw-bold bg-light text-primary border-end" style="cursor:pointer;" onclick="switchMode('attendance')">
+                    📌 โหมดเช็คชื่อ
+                </div>
+                <div id="tab-score" class="flex-fill text-center p-3 fw-bold text-muted" style="cursor:pointer;" onclick="switchMode('score')">
+                    📝 โหมดให้คะแนนงาน
                 </div>
             </div>
-            <div class="col-md-5 mb-4">
-                <div class="main-card p-3 h-100 text-center">
-                    <h6 class="fw-bold mb-3">ภาพรวมการเข้าเรียนวันนี้</h6>
-                    <div style="position: relative; height:250px;">
-                        <canvas id="attendanceChart"></canvas>
-                        <div id="total-percent" style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: bold; color: #1e40af;">0%</div>
+
+            <div class="p-4">
+                <div id="score-form" style="display: none;" class="mb-3 animate-fadeIn">
+                    <label class="fw-bold text-primary mb-2">ตั้งค่าการบันทึกคะแนน</label>
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <select id="assignment-select" class="form-select border-primary">
+                                <option value="">-- กำลังโหลดใบงาน... --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="number" id="input-score" class="form-control border-primary" placeholder="คะแนน">
+                        </div>
                     </div>
+                    <small class="text-muted mt-1 d-block">*ระบบจะบันทึกคะแนนนี้ให้กับเด็กที่สแกนทุกคนในโหมดนี้</small>
+                </div>
+
+                <h5 class="text-primary fw-bold mb-3 text-center" id="mode-title">📷 สแกนเช็คชื่อเข้าเรียน</h5>
+                <div id="reader" class="mx-auto mb-3" style="max-width: 400px; overflow: hidden; border-radius: 15px;"></div>
+                <div id="status" class="status-badge bg-secondary mb-3">สถานะกล้อง: พร้อมใช้งาน</div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary px-4 me-2" onclick="startCamera()">เปิดกล้อง</button>
+                    <button class="btn btn-outline-danger" onclick="stopCamera()">ปิดกล้อง</button>
                 </div>
             </div>
         </div>
-    </div>
+        
+        ```
 
-    <script src="script.js"></script>
-</body>
-</html>
+---
+
+### 2. แก้ไขไฟล์ `script.js` (เพิ่มตรรกะการสลับโหมด)
+
+เพิ่มฟังก์ชันเหล่านี้เข้าไปในไฟล์ `script.js` ของเดิมนะครับ:
+
+```javascript
+let currentMode = 'attendance'; // โหมดเริ่มต้น
+
+// ฟังก์ชันสลับโหมด
+function switchMode(mode) {
+    currentMode = mode;
+    const scoreForm = document.getElementById('score-form');
+    const modeTitle = document.getElementById('mode-title');
+    const tabAtt = document.getElementById('tab-att');
+    const tabScore = document.getElementById('tab-score');
+
+    if (mode === 'score') {
+        scoreForm.style.display = 'block';
+        modeTitle.innerText = "📷 สแกนบันทึกคะแนนงาน";
+        tabScore.classList.add('bg-light', 'text-primary');
+        tabScore.classList.remove('text-muted');
+        tabAtt.classList.add('text-muted');
+        tabAtt.classList.remove('bg-light', 'text-primary');
+        
+        if (currentClassId) loadAssignments(currentClassId); // โหลดใบงานทันที
+    } else {
+        scoreForm.style.display = 'none';
+        modeTitle.innerText = "📷 สแกนเช็คชื่อเข้าเรียน";
+        tabAtt.classList.add('bg-light', 'text-primary');
+        tabAtt.classList.remove('text-muted');
+        tabScore.classList.add('text-muted');
+        tabScore.classList.remove('bg-light', 'text-primary');
+    }
+}
+
+// โหลดรายชื่อใบงานจาก Google Sheets
+async function loadAssignments(classId) {
+    const select = document.getElementById('assignment-select');
+    try {
+        const response = await fetch(`${API_URL}?action=getAssignments&classId=${classId}`);
+        const list = await response.json();
+        
+        select.innerHTML = '<option value="">-- เลือกชิ้นงาน --</option>';
+        if (list.length === 0) {
+            select.innerHTML = '<option value="">(ไม่มีงานในห้องนี้)</option>';
+        } else {
+            list.forEach(item => {
+                select.innerHTML += `<option value="${item.id}">${item.title}</option>`;
+            });
+        }
+    } catch (e) {
+        select.innerHTML = '<option value="">โหลดข้อมูลไม่สำเร็จ</option>';
+    }
+}
+
+// ปรับปรุงฟังก์ชัน onScanSuccess ให้รองรับ 2 โหมด
+async function onScanSuccess(decodedText) {
+    if (!currentClassId) {
+        alert("กรุณาเลือกห้องเรียนก่อนสแกนครับ");
+        return;
+    }
+
+    const status = document.getElementById('status');
+    const assignmentId = document.getElementById('assignment-select').value;
+    const score = document.getElementById('input-score').value;
+
+    if (currentMode === 'score') {
+        // --- โหมดให้คะแนน ---
+        if (!assignmentId || !score) {
+            alert("กรุณาเลือกใบงานและระบุคะแนนก่อนสแกน!");
+            return;
+        }
+        status.innerText = "กำลังบันทึกคะแนน...";
+        const params = new URLSearchParams();
+        params.append('action', 'submitWork');
+        params.append('userId', decodedText);
+        params.append('assignmentId', assignmentId);
+        params.append('score', score);
+
+        try {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+            status.innerText = "✅ บันทึกคะแนนงานสำเร็จ!";
+        } catch (e) { status.innerText = "❌ บันทึกคะแนนล้มเหลว"; }
+
+    } else {
+        // --- โหมดเช็คชื่อ (เดิม) ---
+        status.innerText = "กำลังบันทึกการเข้าเรียน...";
+        const params = new URLSearchParams();
+        params.append('action', 'record');
+        params.append('qrData', decodedText);
+        params.append('classId', currentClassId);
+
+        try {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+            status.innerText = "✅ เช็คชื่อสำเร็จ!";
+            setTimeout(() => loadClassData(currentClassId), 1500);
+        } catch (e) { status.innerText = "❌ เช็คชื่อล้มเหลว"; }
+    }
+}
