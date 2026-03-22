@@ -1,5 +1,4 @@
-// *** สำคัญมาก: เปลี่ยนลิงก์นี้เป็น URL Web App ของคุณครู ***
-const API_URL = "https://script.google.com/macros/s/AKfycbzhaCgLbPfToy3dR97HZbzgVPSm9IEdmVEwOsjryZHDCdzfwTLZNBrcwO9GZkERnrUo/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwyNTMB-3QCddM0t9KInTcBlOXkDT8I0krXpXeQhIvlBac1U3Gl73eaUcS3ZtuQDXRg/exec";
 
 let html5QrCode;
 let myChart;
@@ -9,15 +8,19 @@ let currentClassId = '';
 async function startCamera() {
     const status = document.getElementById('status');
     status.className = "status-badge bg-warning text-dark";
-    status.innerText = "กำลังเข้าถึงกล้อง...";
+    status.innerText = "กำลังเชื่อมต่อกล้อง...";
 
     try {
-        if (html5QrCode) await html5QrCode.stop();
-        html5QrCode = new Html5Qrcode("reader");
+        if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop();
+        }
         
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
         await html5QrCode.start(
             { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            config,
             onScanSuccess
         );
         
@@ -25,61 +28,84 @@ async function startCamera() {
         status.innerText = "กล้องกำลังทำงาน...";
     } catch (err) {
         status.className = "status-badge bg-danger";
-        status.innerText = "Error: " + err;
-        alert("กรุณาอนุญาตการเข้าถึงกล้อง");
+        status.innerText = "กล้องถูกบล็อก";
+        alert("กรุณาอนุญาตการเข้าถึงกล้องที่รูปแม่กุญแจบน URL แล้วลองใหม่อีกครั้งครับ");
     }
 }
 
-// เมื่อสแกนติด
+// ฟังก์ชันปิดกล้อง
+function stopCamera() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            const status = document.getElementById('status');
+            status.innerText = "ปิดกล้องแล้ว";
+            status.className = "status-badge bg-secondary";
+        });
+    }
+}
+
+// ฟังก์ชันเมื่อสแกนพบ QR
 async function onScanSuccess(decodedText) {
-    document.getElementById('status').innerText = "สแกนสำเร็จ! กำลังบันทึก...";
-    
+    const status = document.getElementById('status');
+    status.innerText = "สแกนสำเร็จ! กำลังส่งข้อมูล...";
+    status.className = "status-badge bg-warning text-dark";
+
     try {
-        const response = await fetch(API_URL, {
+        // ส่งแบบ POST ไม่ระบุ Content-Type เพื่อลดปัญหา CORS Preflight
+        await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors', // สำคัญสำหรับการส่งข้อมูลข้ามโดเมนไป Google
             body: JSON.stringify({
                 action: 'record',
                 qrData: decodedText,
-                timestamp: new Date().toISOString()
+                userId: 'STU_AUTO'
             })
         });
+
+        alert("สแกนสำเร็จ! ข้อมูลถูกบันทึกลง Google Sheets แล้ว");
         
-        alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-        if(currentClassId) loadClassData(currentClassId);
+        if (currentClassId) {
+            loadClassData(currentClassId);
+        }
     } catch (e) {
-        alert("เกิดข้อผิดพลาดในการบันทึก: " + e);
+        // หากเบราว์เซอร์จับ error จาก No-CORS แต่ข้อมูลไปถึงหลังบ้านจริง ก็อัปเดตตารางได้
+        if (currentClassId) {
+            loadClassData(currentClassId);
+        }
     }
 }
 
-// โหลดข้อมูลห้องเรียนจาก Google Sheets
+// ดึงข้อมูลรายชื่อและสถิติห้องเรียน
 async function loadClassData(classId) {
     currentClassId = classId;
     const tableBody = document.getElementById('att-table');
-    tableBody.innerHTML = '<tr><td class="text-center">กำลังโหลดข้อมูล...</td></tr>';
+    tableBody.innerHTML = '<tr><td class="text-center">กำลังดึงข้อมูลล่าสุด...</td></tr>';
 
     try {
         const response = await fetch(`${API_URL}?action=getDashboard&classId=${classId}`);
         const res = await response.json();
         
-        // อัปเดตตาราง
         let html = '';
-        res.attendanceList.forEach(item => {
-            html += `<tr><td>${item.name}</td><td>${item.time}</td><td><span class="badge bg-success">มาเรียน</span></td></tr>`;
-        });
-        tableBody.innerHTML = html || '<tr><td class="text-center text-muted">ยังไม่มีข้อมูลวันนี้</td></tr>';
+        if (res.attendanceList && res.attendanceList.length > 0) {
+            res.attendanceList.forEach(item => {
+                html += `<tr><td>${item.name}</td><td>${item.time}</td><td><span class="badge bg-success">มาเรียน</span></td></tr>`;
+            });
+        } else {
+            html = '<tr><td class="text-center text-muted">ยังไม่มีข้อมูลเช็คชื่อวันนี้</td></tr>';
+        }
+        tableBody.innerHTML = html;
         
-        updateChart(res.stats);
+        updateChart(res.stats || { present: 0, late: 0, absent: 0 });
     } catch (e) {
-        tableBody.innerHTML = '<tr><td class="text-center text-danger">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+        tableBody.innerHTML = '<tr><td class="text-center text-danger">ไม่พบข้อมูล หรือ ลิงก์ API ไม่ถูกต้อง</td></tr>';
     }
 }
 
-// อัปเดตกราฟสรุปผล (Chart.js)
+// อัปเดตกราฟ Chart.js
 function updateChart(stats) {
     const ctx = document.getElementById('attendanceChart').getContext('2d');
     const total = stats.present + stats.late + stats.absent;
-    document.getElementById('total-percent').innerText = total > 0 ? Math.round((stats.present/total)*100) + "%" : "0%";
+    
+    document.getElementById('total-percent').innerText = total > 0 ? Math.round((stats.present / total) * 100) + "%" : "0%";
 
     if (myChart) myChart.destroy();
     myChart = new Chart(ctx, {
@@ -93,12 +119,5 @@ function updateChart(stats) {
             }]
         },
         options: { plugins: { legend: { position: 'bottom' } } }
-    });
-}
-
-function stopCamera() {
-    if(html5QrCode) html5QrCode.stop().then(() => {
-        document.getElementById('status').innerText = "ปิดกล้องแล้ว";
-        document.getElementById('status').className = "status-badge bg-secondary";
     });
 }
