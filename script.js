@@ -3,6 +3,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxurRNi6a4opH2xthxqJ30u
 
 let html5QrCode;
 let myChart;
+let comparisonChartObj; // เก็บ instance ของกราฟเปรียบเทียบ
 let currentClassId = ''; 
 let currentMode = 'attendance'; // โหมดเริ่มต้น
 
@@ -16,11 +17,16 @@ function selectClass(classId) {
         display.innerText = "กำลังจัดการห้อง: " + className;
         display.className = "status-badge bg-primary mb-3";
     }
-    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
-    if (event) event.currentTarget.classList.add('active');
     
+    // ไฮไลท์ปุ่มที่เลือก
+    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    
+    // โหลดข้อมูลทั้งหมดที่เกี่ยวข้อง
     loadClassData(classId);
     loadAssignments(classId);
+    loadScoreSummary();
+    loadComparisonChart(); // โหลดกราฟเปรียบเทียบทุกครั้งที่เปลี่ยนห้อง
 }
 
 function switchMode(mode) {
@@ -90,7 +96,7 @@ async function onScanSuccess(decodedText) {
     const assignmentId = document.getElementById('assignment-select').value;
     const score = document.getElementById('input-score').value;
 
-    playBeep(); // ส่งเสียงทันทีที่ตรวจพบ QR
+    playBeep();
 
     if (currentMode === 'score') {
         if (!assignmentId || !score) {
@@ -110,6 +116,11 @@ async function onScanSuccess(decodedText) {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
             status.innerText = "✅ บันทึกคะแนนสำเร็จ: " + decodedText;
             status.className = "status-badge bg-success mb-3";
+            // อัปเดต Dashboard คะแนนหลังบันทึก
+            setTimeout(() => {
+                loadScoreSummary();
+                loadComparisonChart();
+            }, 1000);
         } catch (e) { 
             status.innerText = "❌ บันทึกคะแนนล้มเหลว"; 
             status.className = "status-badge bg-danger mb-3";
@@ -135,42 +146,67 @@ async function onScanSuccess(decodedText) {
     }
 }
 
-// --- ระบบเสียงและล้างค่า ---
+// --- ระบบกราฟสรุปและเปรียบเทียบ ---
 
-function playBeep() {
-    const beep = document.getElementById('beep-sound');
-    if (beep) {
-        beep.currentTime = 0;
-        beep.play().catch(e => console.log("Audio play blocked"));
-    }
+async function loadComparisonChart() {
+    try {
+        const response = await fetch(`${API_URL}?action=getClassComparison`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        
+        // ถ้ามีกราฟเดิมอยู่ให้ทำลายทิ้งก่อนสร้างใหม่เพื่อป้องกันบั๊กแสดงซ้อน
+        if (comparisonChartObj) comparisonChartObj.destroy();
+        
+        comparisonChartObj = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(i => i.className),
+                datasets: [{
+                    label: 'คะแนนเฉลี่ย',
+                    data: data.map(i => i.averageScore),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } catch (e) { console.error("โหลดกราฟเปรียบเทียบไม่สำเร็จ", e); }
 }
 
-function clearScore() {
-    document.getElementById('input-score').value = '';
-    document.getElementById('assignment-select').selectedIndex = 0;
-    document.getElementById('status').innerText = "ล้างข้อมูลเรียบร้อย";
-    document.getElementById('status').className = "status-badge bg-secondary mb-3";
-}
-
-// --- ฟังก์ชันเสริม: ส่งออกไฟล์ Excel ---
-
-function exportToExcel() {
-    const table = document.getElementById("att-table-main"); // ID ของตาราง Dashboard
-    if (!table || table.rows.length <= 1) {
-        alert("ไม่มีข้อมูลให้ส่งออกครับ");
-        return;
-    }
+function updateChart(stats) {
+    const canvas = document.getElementById('attendanceChart');
+    if (!canvas) return; // ป้องกัน error ถ้าไม่มี canvas นี้ใน HTML
     
-    let html = table.outerHTML;
-    let blob = new Blob([html], { type: "application/vnd.ms-excel" });
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = `Attendance_${currentClassId}_${new Date().toLocaleDateString()}.xls`;
-    a.click();
+    const ctx = canvas.getContext('2d');
+    const total = stats.present + stats.late + stats.absent;
+    const percent = total > 0 ? Math.round(((stats.present + stats.late) / total) * 100) : 0;
+    document.getElementById('total-percent').innerText = percent + "%";
+    
+    // อัปเดต Progress Bar
+    const pBar = document.getElementById('percent-bar');
+    if(pBar) pBar.style.width = percent + "%";
+
+    if (myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['มา', 'สาย', 'ขาด'],
+            datasets: [{
+                data: [stats.present, stats.late, stats.absent],
+                backgroundColor: ['#1e40af', '#f59e0b', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '75%' }
+    });
 }
 
-// --- ฟังก์ชันดึงข้อมูลจาก Sheets ---
+// --- ฟังก์ชันเสริมและระบบช่วยเหลือก ---
 
 async function loadAssignments(classId) {
     const select = document.getElementById('assignment-select');
@@ -209,67 +245,10 @@ async function loadClassData(classId) {
     }
 }
 
-function updateChart(stats) {
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
-    const total = stats.present + stats.late + stats.absent;
-    const percent = total > 0 ? Math.round(((stats.present + stats.late) / total) * 100) : 0;
-    document.getElementById('total-percent').innerText = percent + "%";
-
-    if (myChart) myChart.destroy();
-    myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['มา', 'สาย', 'ขาด'],
-            datasets: [{
-                data: [stats.present, stats.late, stats.absent],
-                backgroundColor: ['#1e40af', '#f59e0b', '#ef4444'],
-                borderWidth: 0
-            }]
-        },
-        options: { plugins: { legend: { display: false } }, cutout: '75%' }
-    });
-}
-
-// ฟังก์ชันบันทึกการตั้งค่าห้องเรียน
-async function saveSettings() {
-    const startTime = document.getElementById('start-time').value;
-    const lateLimit = document.getElementById('late-limit').value;
-    
-    const params = new URLSearchParams();
-    params.append('action', 'saveSettings');
-    params.append('classId', currentClassId);
-    params.append('startTime', startTime);
-    params.append('lateLimit', lateLimit);
-
-    try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-        alert("บันทึกการตั้งค่าสำเร็จ!");
-    } catch (e) { alert("ล้มเหลวในการบันทึก"); }
-}
-
-// ฟังก์ชันเพิ่มใบงานใหม่เข้าไปใน Google Sheets
-async function addNewAssignment() {
-    const title = document.getElementById('new-assignment').value;
-    if (!title) return alert("กรุณากรอกชื่อใบงาน");
-
-    const params = new URLSearchParams();
-    params.append('action', 'addAssignment');
-    params.append('classId', currentClassId);
-    params.append('title', title);
-
-    try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-        document.getElementById('new-assignment').value = '';
-        alert("เพิ่มใบงานสำเร็จ!");
-        loadAssignments(currentClassId); // รีโหลดรายชื่อใบงานใน Dropdown
-    } catch (e) { alert("เพิ่มไม่สำเร็จ"); }
-}
-
-// ฟังก์ชันโหลดสรุปคะแนนสะสม (Dashboard)
 async function loadScoreSummary() {
-    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนครับ");
+    if (!currentClassId) return;
     const tbody = document.getElementById('summary-body');
-    tbody.innerHTML = '<tr><td colspan="6">กำลังประมวลผลคะแนน...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6">กำลังโหลดคะแนน...</td></tr>';
 
     try {
         const response = await fetch(`${API_URL}?action=getScoreSummary&classId=${currentClassId}`);
@@ -292,8 +271,41 @@ async function loadScoreSummary() {
                     </td>
                 </tr>`;
         });
-        tbody.innerHTML = html;
+        tbody.innerHTML = html || '<tr><td colspan="6">ไม่พบข้อมูล</td></tr>';
     } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-danger">ไม่สามารถโหลดข้อมูลสรุปได้</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-danger">ผิดพลาด</td></tr>';
     }
 }
+
+// ระบบเสียง Beep
+function playBeep() {
+    const beep = document.getElementById('beep-sound');
+    if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(e => console.log("Audio play blocked"));
+    }
+}
+
+// อื่นๆ
+function clearScore() {
+    document.getElementById('input-score').value = '';
+    document.getElementById('assignment-select').selectedIndex = 0;
+}
+
+function exportToExcel() {
+    const table = document.getElementById("att-table-main");
+    if (!table || table.rows.length <= 1) return alert("ไม่มีข้อมูล");
+    
+    let html = table.outerHTML;
+    let blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = `Attendance_${currentClassId}.xls`;
+    a.click();
+}
+
+// โหลดกราฟเปรียบเทียบเริ่มต้นเมื่อหน้าเว็บโหลด
+window.onload = () => {
+    loadComparisonChart();
+};
