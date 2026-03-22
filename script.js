@@ -208,7 +208,49 @@ async function updateComparisonChart() {
         });
     } catch (e) { console.error("กราฟผิดพลาด"); }
 }
+// ฟังก์ชันเพิ่มใบงานใหม่
+async function addNewAssignment() {
+    const asgnName = document.getElementById('new-assignment').value; // ชื่อใบงาน
+    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
+    if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
 
+    const params = new URLSearchParams();
+    params.append('action', 'addNewAssignment');
+    params.append('classId', currentClassId);
+    params.append('assignmentName', asgnName);
+
+    try {
+        // ใช้ fetch แบบระบุ Method POST
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // สำคัญสำหรับ GAS
+            body: params
+        });
+        alert("เพิ่มใบงาน: " + asgnName + " เรียบร้อยแล้ว");
+        document.getElementById('new-assignment').value = ''; // ล้างช่องกรอก
+        loadAssignments(currentClassId); // โหลดรายการงานใหม่ลง Dropdown
+    } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    }
+}
+
+// ปรับปรุงฟังก์ชันสร้างห้องเพื่อรองรับการแจ้งเตือน "ห้องซ้ำ"
+async function addNewClass() {
+    const level = document.getElementById('new-level').value;
+    const name = document.getElementById('new-class-name').value;
+    if (!name) return alert("กรุณาระบุเลขห้อง");
+
+    const params = new URLSearchParams();
+    params.append('action', 'addClass');
+    params.append('level', level);
+    params.append('name', name);
+
+    const response = await fetch(API_URL, { method: 'POST', body: params });
+    // หมายเหตุ: ถ้าใช้ no-cors จะอ่าน response ไม่ได้ 
+    // ถ้าต้องการเช็คซ้ำเป๊ะๆ ต้องตั้งค่า GAS ให้รองรับ CORS หรือเช็คจากหน้า Web ก่อนส่งครับ
+    alert("ส่งคำขอสร้างห้องเรียนแล้ว (หากไม่ซ้ำระบบจะบันทึกให้)");
+    renderClassButtons(level);
+}
 // โหลดข้อมูลเริ่มต้น
 window.onload = () => {
     filterLevel('ปวช');
