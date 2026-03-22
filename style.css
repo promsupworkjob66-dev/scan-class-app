@@ -59,3 +59,40 @@ body {
     font-size: 0.85rem;
     color: white;
 }
+/* 1. จัดตำแหน่งตัวเลขเปอร์เซ็นต์ให้อยู่ตรงกลางกราฟวงกลมพอดี */
+#total-percent {
+    pointer-events: none; /* ป้องกันไม่ให้ตัวเลขบังการคลิกกราฟ */
+    z-index: 10;
+}
+
+/* 2. เพิ่มสถานะ 'Active' เมื่อกดเลือกห้องเรียน เพื่อให้ครูรู้ว่าตอนนี้เลือกห้องไหนอยู่ */
+.card-btn.active {
+    outline: 4px solid #1e40af; /* ขอบสีน้ำเงินเข้ม */
+    outline-offset: 2px;
+    transform: scale(1.05); /* ขยายใหญ่ขึ้นนิดหน่อย */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. ปรับแต่งตารางให้ดูสะอาดตาและอ่านง่ายขึ้น */
+.table th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+/* 4. แก้ไขปัญหา Reader ของ QR Code บางครั้งแสดงเส้นสีแดงเกินออกมา */
+#reader__dashboard {
+    padding: 10px !important;
+    background: white !important;
+    border-top: 1px solid #e2e8f0;
+}
+
+#reader video {
+    object-fit: cover; /* ให้ภาพจากกล้องเต็มกรอบสวยงาม */
+}
