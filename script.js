@@ -31,6 +31,7 @@ function filterLevel(level) {
 }
 
 // 3. สร้างปุ่มห้องเรียน
+// 3. ฟังก์ชันสร้างปุ่มห้องเรียน (แก้ไขให้ดึงชื่อห้องที่ถูกต้อง)
 function renderClassButtons(level) {
     const container = document.getElementById('class-buttons');
     container.innerHTML = '<div class="col-12 text-center text-muted small">กำลังโหลดรายการห้องเรียน...</div>';
@@ -50,32 +51,38 @@ function renderClassButtons(level) {
             filtered.forEach(item => {
                 const col = document.createElement('div');
                 col.className = 'col-4 col-md-3';
+                
+                // แก้ไขจุดนี้: item.name หรือ item.id ต้องเป็นข้อความ "ปวช 1/1" ไม่ใช่ Date
+                const displayName = item.name || item.id; 
+                
                 col.innerHTML = `<div class="card card-btn text-center p-3 shadow-sm bg-p6" 
-                                onclick="selectClass('${item.id}', this)">${item.name}</div>`;
+                                onclick="selectClass('${displayName}', this)">${displayName}</div>`;
                 container.appendChild(col);
             });
-        })
-        .catch(err => {
-            container.innerHTML = `<div class="col-12 text-center text-danger">ไม่สามารถโหลดข้อมูลได้</div>`;
         });
 }
 
-// 4. เลือกห้องเรียน
+// 4. ฟังก์ชันเลือกห้องเรียน (ทำให้ตัวแปร currentClassId ไม่ว่าง)
 function selectClass(classId, element) {
-    currentClassId = classId;
+    if(!classId || classId.includes('T00:00')) {
+        alert("ข้อมูลห้องเรียนไม่ถูกต้อง กรุณาลบแถวใน Google Sheets แล้วสร้างใหม่ครับ");
+        return;
+    }
+    
+    currentClassId = classId; // เก็บชื่อห้องเข้าตัวแปรกลาง
+    
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
 
+    // แสดงชื่อห้องที่เลือกให้ชัดเจน
     document.getElementById('selected-class').innerText = "จัดการห้อง: " + classId;
     document.getElementById('selected-class').className = "status-badge bg-primary shadow-sm mb-3";
     
-    // อัปเดตชื่อห้องในโหมดตั้งค่า (ถ้ามี)
-    const settingName = document.getElementById('setting-class-name');
-    if(settingName) settingName.innerText = classId;
+    // สำคัญ: ต้องอัปเดตชื่อห้องในโหมดตั้งค่าด้วย เพื่อให้กดเพิ่มงานได้
+    const settingLabel = document.getElementById('setting-class-name');
+    if(settingLabel) settingLabel.innerText = classId;
 
-    loadClassData(classId); // ฟังก์ชันดึงรายชื่อนักเรียน
-    loadAssignments(classId); // ฟังก์ชันดึงใบงานลง Dropdown
-    if(typeof loadScoreSummary === "function") loadScoreSummary();
+    loadAssignments(classId); 
 }
 
 // 5. ระบบเพิ่มห้องเรียนใหม่ (ป้องกันการสร้างซ้ำและอัปเดต UI ทันที)
