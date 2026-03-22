@@ -1,35 +1,28 @@
-// 1. ตั้งค่า API URL (ใช้ URL ล่าสุดจากการ Deploy ใน Apps Script)
+// 1. ตั้งค่า API URL
 const API_URL = "https://script.google.com/macros/s/AKfycbxurRNi6a4opH2xthxqJ30u_ZFFoBSTY7F3DbV3x2oL8VM32TDsLveiTJxGMd3a_pjc/exec";
 
 let html5QrCode;
 let myChart;
 let currentClassId = ''; 
-let currentMode = 'attendance'; // โหมดเริ่มต้นคือเช็คชื่อ
+let currentMode = 'attendance'; // โหมดเริ่มต้น
 
 // --- ฟังก์ชันหลัก (Core Functions) ---
 
-// เลือกห้องเรียน
 function selectClass(classId) {
     currentClassId = classId;
-    
-    // อัปเดต UI ข้อความห้องเรียน
     const display = document.getElementById('selected-class');
     if (display) {
         let className = (classId === 'A1') ? 'ปวช.1' : (classId === 'A2' ? 'ปวช.2' : 'ปวช.3');
         display.innerText = "กำลังจัดการห้อง: " + className;
         display.className = "status-badge bg-primary mb-3";
     }
-    
-    // เน้นปุ่มที่ถูกเลือก (Active State)
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
     if (event) event.currentTarget.classList.add('active');
     
-    // โหลดข้อมูล Dashboard และรายชื่อใบงาน (เผื่อสลับไปโหมดคะแนน)
     loadClassData(classId);
     loadAssignments(classId);
 }
 
-// สลับโหมดการทำงาน (เช็คชื่อ / ให้คะแนน)
 function switchMode(mode) {
     currentMode = mode;
     const scoreForm = document.getElementById('score-form');
@@ -54,13 +47,11 @@ function switchMode(mode) {
     }
 }
 
-// --- ฟังก์ชันกล้อง (Camera Functions) ---
+// --- ฟังก์ชันกล้อง ---
 
 async function startCamera() {
     const status = document.getElementById('status');
-    if (html5QrCode && html5QrCode.isScanning) {
-        await html5QrCode.stop();
-    }
+    if (html5QrCode && html5QrCode.isScanning) { await html5QrCode.stop(); }
     status.innerText = "กำลังเชื่อมต่อกล้อง...";
     try {
         html5QrCode = new Html5Qrcode("reader");
@@ -87,9 +78,8 @@ async function stopCamera() {
     }
 }
 
-// --- ฟังก์ชันจัดการข้อมูล (Data Handling) ---
+// --- ฟังก์ชันจัดการข้อมูลและสแกน ---
 
-// เมื่อสแกน QR Code สำเร็จ
 async function onScanSuccess(decodedText) {
     if (!currentClassId) {
         alert("กรุณาเลือกห้องเรียนก่อนเริ่มสแกนครับ");
@@ -100,13 +90,16 @@ async function onScanSuccess(decodedText) {
     const assignmentId = document.getElementById('assignment-select').value;
     const score = document.getElementById('input-score').value;
 
+    playBeep(); // ส่งเสียงทันทีที่ตรวจพบ QR
+
     if (currentMode === 'score') {
-        // --- โหมดบันทึกคะแนน ---
         if (!assignmentId || !score) {
-            alert("กรุณาเลือกใบงานและระบุคะแนนก่อนสแกนครับ!");
+            alert("กรุณาเลือกใบงานและระบุคะแนนก่อนสแกน!");
             return;
         }
         status.innerText = "กำลังบันทึกคะแนน...";
+        status.className = "status-badge bg-primary mb-3";
+        
         const params = new URLSearchParams();
         params.append('action', 'submitWork');
         params.append('userId', decodedText);
@@ -116,11 +109,15 @@ async function onScanSuccess(decodedText) {
         try {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
             status.innerText = "✅ บันทึกคะแนนสำเร็จ: " + decodedText;
-        } catch (e) { status.innerText = "❌ เกิดข้อผิดพลาดในการบันทึก"; }
+            status.className = "status-badge bg-success mb-3";
+        } catch (e) { 
+            status.innerText = "❌ บันทึกคะแนนล้มเหลว"; 
+            status.className = "status-badge bg-danger mb-3";
+        }
 
     } else {
-        // --- โหมดเช็คชื่อปกติ ---
         status.innerText = "กำลังบันทึกการเข้าเรียน...";
+        status.className = "status-badge bg-primary mb-3";
         const params = new URLSearchParams();
         params.append('action', 'record');
         params.append('qrData', decodedText);
@@ -129,29 +126,64 @@ async function onScanSuccess(decodedText) {
         try {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
             status.innerText = "✅ เช็คชื่อสำเร็จ: " + decodedText;
-            // หน่วงเวลาเล็กน้อยเพื่อให้ชีตอัปเดตแล้วโหลด Dashboard ใหม่
+            status.className = "status-badge bg-success mb-3";
             setTimeout(() => loadClassData(currentClassId), 1500);
-        } catch (e) { status.innerText = "❌ เช็คชื่อล้มเหลว"; }
+        } catch (e) { 
+            status.innerText = "❌ เช็คชื่อล้มเหลว"; 
+            status.className = "status-badge bg-danger mb-3";
+        }
     }
 }
 
-// ดึงรายชื่อใบงานจาก Google Sheets
+// --- ระบบเสียงและล้างค่า ---
+
+function playBeep() {
+    const beep = document.getElementById('beep-sound');
+    if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(e => console.log("Audio play blocked"));
+    }
+}
+
+function clearScore() {
+    document.getElementById('input-score').value = '';
+    document.getElementById('assignment-select').selectedIndex = 0;
+    document.getElementById('status').innerText = "ล้างข้อมูลเรียบร้อย";
+    document.getElementById('status').className = "status-badge bg-secondary mb-3";
+}
+
+// --- ฟังก์ชันเสริม: ส่งออกไฟล์ Excel ---
+
+function exportToExcel() {
+    const table = document.getElementById("att-table-main"); // ID ของตาราง Dashboard
+    if (!table || table.rows.length <= 1) {
+        alert("ไม่มีข้อมูลให้ส่งออกครับ");
+        return;
+    }
+    
+    let html = table.outerHTML;
+    let blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = `Attendance_${currentClassId}_${new Date().toLocaleDateString()}.xls`;
+    a.click();
+}
+
+// --- ฟังก์ชันดึงข้อมูลจาก Sheets ---
+
 async function loadAssignments(classId) {
     const select = document.getElementById('assignment-select');
     try {
         const response = await fetch(`${API_URL}?action=getAssignments&classId=${classId}`);
         const list = await response.json();
-        
         select.innerHTML = '<option value="">-- เลือกชิ้นงาน --</option>';
         list.forEach(item => {
             select.innerHTML += `<option value="${item.id}">${item.title}</option>`;
         });
-    } catch (e) {
-        console.error("โหลดใบงานล้มเหลว:", e);
-    }
+    } catch (e) { console.error("โหลดใบงานล้มเหลว"); }
 }
 
-// ดึงข้อมูล Dashboard (ตาราง + กราฟ)
 async function loadClassData(classId) {
     const tableBody = document.getElementById('att-table');
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center">กำลังอัปเดต...</td></tr>';
@@ -173,11 +205,10 @@ async function loadClassData(classId) {
         tableBody.innerHTML = html;
         updateChart(res.stats);
     } catch (e) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">โหลดข้อมูลล้มเหลว</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">โหลดล้มเหลว</td></tr>';
     }
 }
 
-// อัปเดตกราฟ Doughnut
 function updateChart(stats) {
     const ctx = document.getElementById('attendanceChart').getContext('2d');
     const total = stats.present + stats.late + stats.absent;
