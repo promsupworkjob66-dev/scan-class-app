@@ -19,7 +19,6 @@
 </nav>
 
 <div class="container mt-4">
-    
     <div class="mb-4">
         <ul class="nav nav-pills nav-fill bg-white p-2 rounded shadow-sm" id="levelTab" role="tablist">
             <li class="nav-item">
@@ -39,9 +38,10 @@
             <h5 class="fw-bold text-dark mb-0">🛠️ Teacher Settings (โหมดครู)</h5>
             <button class="btn-close" onclick="document.getElementById('teacher-section').style.display='none'"></button>
         </div>
+        
         <div class="row g-3">
             <div class="col-md-6 border-end">
-                <div class="p-3 rounded bg-light">
+                <div class="p-3 rounded bg-light h-100">
                     <label class="fw-bold small text-primary mb-2">➕ เพิ่มห้องเรียนใหม่</label>
                     <div class="input-group">
                         <select id="new-level" class="form-select form-select-sm" style="max-width: 100px;">
@@ -53,23 +53,53 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-md-6">
-                <div class="p-3 rounded bg-light">
-                    <label class="fw-bold small text-primary mb-2">⚙️ ตั้งค่าห้องเรียนปัจจุบัน</label>
-                    <div class="row g-2">
+                <div class="p-3 rounded bg-light h-100">
+                    <label class="fw-bold small text-primary mb-2">⚙️ เพิ่มใบงาน/งานปัจจุบัน</label>
+                    <div class="input-group">
+                        <input type="text" id="new-assignment" class="form-control form-control-sm" placeholder="ชื่อใบงานใหม่...">
+                        <button class="btn btn-primary btn-sm" onclick="addNewAssignment()">เพิ่มงาน</button>
+                    </div>
+                    <div class="row g-2 mt-2">
                         <div class="col-6">
+                            <small class="text-muted d-block">เวลาเข้าเรียน</small>
                             <input type="time" id="start-time" class="form-control form-control-sm" value="08:30">
                         </div>
                         <div class="col-6">
-                            <input type="number" id="late-limit" class="form-control form-control-sm" placeholder="สายเกิน (นาที)" value="15">
-                        </div>
-                        <div class="col-12 mt-2">
-                            <div class="input-group">
-                                <input type="text" id="new-assignment" class="form-control form-control-sm" placeholder="ชื่อใบงานใหม่...">
-                                <button class="btn btn-primary btn-sm" onclick="addNewAssignment()">เพิ่มงาน</button>
-                            </div>
+                            <small class="text-muted d-block">นาทีที่สาย</small>
+                            <input type="number" id="late-limit" class="form-control form-control-sm" value="15">
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 border-end">
+                <div class="p-3 rounded bg-light">
+                    <label class="fw-bold small text-danger mb-2">🗑️ จัดการใบงานเดิม (แก้ไข/ลบ)</label>
+                    <div class="input-group mb-2">
+                        <select id="edit-assignment-select" class="form-select form-select-sm">
+                            <option value="">-- เลือกใบงานที่จะจัดการ --</option>
+                        </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="edit-assignment-title" class="form-control form-control-sm" placeholder="พิมพ์ชื่อใหม่เพื่อแก้ไข">
+                        <button class="btn btn-warning btn-sm" onclick="editAssignment()">แก้ไข</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteAssignment()">ลบ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded bg-light h-100">
+                    <label class="fw-bold small text-danger mb-2">🚫 ลบห้องเรียนออกจากระบบ</label>
+                    <div class="input-group">
+                        <select id="delete-class-select" class="form-select form-select-sm">
+                            <option value="">-- เลือกห้องที่จะลบ --</option>
+                        </select>
+                        <button class="btn btn-danger btn-sm" onclick="deleteClass()">ลบห้องนี้</button>
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">*ระวัง: การลบห้องจะทำให้ข้อมูลในหน้านี้หายไป</small>
                 </div>
             </div>
         </div>
@@ -86,6 +116,17 @@
                 <div id="tab-att" class="flex-fill text-center p-3 fw-bold bg-light text-primary border-end" style="cursor:pointer;" onclick="switchMode('attendance')">📌 เช็คชื่อ</div>
                 <div id="tab-score" class="flex-fill text-center p-3 fw-bold text-muted" style="cursor:pointer;" onclick="switchMode('score')">📝 ให้คะแนน</div>
             </div>
+            
+            <div id="score-form" class="p-3 bg-light border-bottom text-center" style="display:none;">
+                <div class="d-inline-flex gap-2 align-items-center flex-wrap justify-content-center">
+                    <select id="assignment-select" class="form-select form-select-sm" style="width:200px;">
+                        <option value="">-- เลือกใบงาน --</option>
+                    </select>
+                    <input type="number" id="input-score" class="form-control form-control-sm" style="width:100px;" placeholder="คะแนน">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="clearScore()">ล้าง</button>
+                </div>
+            </div>
+
             <div class="p-4 text-center">
                 <h5 id="mode-title" class="fw-bold text-primary mb-3">📷 สแกนเช็คชื่อเข้าเรียน</h5>
                 <div id="reader" class="mx-auto mb-3" style="max-width: 400px; border-radius: 15px; overflow: hidden;"></div>
@@ -103,25 +144,6 @@
         </div>
     </section>
 
-    <section id="summary-section" class="scroll-mt">
-        </section>
-
-    <section id="attendance-section" class="scroll-mt">
-        </section>
-
+    <section id="summary-section" class="scroll-mt"></section>
+    <section id="attendance-section" class="scroll-mt"></section>
 </div>
-
-<style>
-    .scroll-mt { scroll-margin-top: 80px; } /* ป้องกันหัวข้อโดน Navbar ทับเวลา Jump */
-    .card-btn.active { 
-        background-color: #0d6efd !important; 
-        color: white !important;
-        border: 2px solid #000;
-    }
-    .main-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
-    }
-</style>
