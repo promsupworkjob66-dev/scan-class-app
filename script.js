@@ -1,88 +1,35 @@
-// 1. ตั้งค่า API URL และตัวแปรส่วนกลาง
-const API_URL = "https://script.google.com/macros/s/AKfycbxurRNi6a4opH2xthxqJ30u_ZFFoBSTY7F3DbV3x2oL8VM32TDsLveiTJxGMd3a_pjc/exec";
-const TEACHER_PIN = "1234"; // รหัสผ่านสำหรับโหมดครู
+// 1. ตั้งค่า API URL (ใช้ URL ล่าสุดจากการ Deploy ใน Apps Script)
+const API_URL = "https://script.google.com/macros/s/AKfycbx57VxNJTYIDr-y4SCQs5eEWkxw5ifhOZZi41dh5Uc_kvaavN398Z-rmS7thaNsXZAa/exec";
 
 let html5QrCode;
 let myChart;
-let comparisonChartObj; 
 let currentClassId = ''; 
-let currentMode = 'attendance'; 
-
-// รายชื่อห้องเรียน (แนะนำให้ดึงจาก Sheets ในอนาคต แต่ตอนนี้ใช้แบบ Static ตามโครงสร้างที่ครูต้องการ)
-let classList = [
-    { id: 'A1', name: '1/1', level: 'ปวช' },
-    { id: 'A2', name: '2/1', level: 'ปวช' },
-    { id: 'A3', name: '3/1', level: 'ปวช' },
-    { id: 'B1', name: '1/1', level: 'ปวส' },
-    { id: 'B2', name: '2/1', level: 'ปวส' }
-];
-
-// --- ระบบเริ่มต้น (Initialization) ---
-
-window.onload = () => {
-    loadComparisonChart();
-    filterLevel('ปวช'); // เริ่มต้นแสดงผลระดับ ปวช.
-};
+let currentMode = 'attendance'; // โหมดเริ่มต้นคือเช็คชื่อ
 
 // --- ฟังก์ชันหลัก (Core Functions) ---
 
+// เลือกห้องเรียน
 function selectClass(classId) {
     currentClassId = classId;
-    const display = document.getElementById('selected-class');
     
-    // ค้นหาข้อมูลห้องจาก classList เพื่อเอาชื่อมาแสดง
-    const room = classList.find(c => c.id === classId);
-    if (display && room) {
-        display.innerText = `กำลังจัดการห้อง: ${room.level}.${room.name}`;
+    // อัปเดต UI ข้อความห้องเรียน
+    const display = document.getElementById('selected-class');
+    if (display) {
+        let className = (classId === 'A1') ? 'ปวช.1' : (classId === 'A2' ? 'ปวช.2' : 'ปวช.3');
+        display.innerText = "กำลังจัดการห้อง: " + className;
         display.className = "status-badge bg-primary mb-3";
     }
     
-    // ไฮไลท์ปุ่มที่เลือก
+    // เน้นปุ่มที่ถูกเลือก (Active State)
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
-    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    if (event) event.currentTarget.classList.add('active');
     
-    // โหลดข้อมูลที่เกี่ยวข้อง
+    // โหลดข้อมูล Dashboard และรายชื่อใบงาน (เผื่อสลับไปโหมดคะแนน)
     loadClassData(classId);
     loadAssignments(classId);
-    loadScoreSummary();
-    loadComparisonChart();
 }
 
-function filterLevel(level) {
-    // เปลี่ยนสถานะปุ่ม Tab ใน UI
-    document.querySelectorAll('#levelTab .nav-link').forEach(btn => btn.classList.remove('active'));
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-    } else {
-        // กรณีเรียกใช้ตอนโหลดหน้าแรก
-        const activeBtn = level === 'ปวช' ? document.getElementById('btn-level-pvc') : document.getElementById('btn-level-pvs');
-        if(activeBtn) activeBtn.classList.add('active');
-    }
-
-    const container = document.getElementById('class-buttons');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const filtered = classList.filter(c => c.level === level);
-    
-    if (filtered.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted">ยังไม่มีห้องเรียนในระดับนี้</div>';
-        return;
-    }
-
-    filtered.forEach(c => {
-        container.innerHTML += `
-            <div class="col-4 col-md-2">
-                <div class="card card-btn text-center p-2 shadow-sm border-0 bg-light mb-2" 
-                     style="cursor:pointer;" 
-                     onclick="selectClass('${c.id}')">
-                    <small class="text-primary fw-bold">${c.level}</small>
-                    <div class="fw-bold">${c.name}</div>
-                </div>
-            </div>`;
-    });
-}
-
+// สลับโหมดการทำงาน (เช็คชื่อ / ให้คะแนน)
 function switchMode(mode) {
     currentMode = mode;
     const scoreForm = document.getElementById('score-form');
@@ -91,14 +38,14 @@ function switchMode(mode) {
     const tabScore = document.getElementById('tab-score');
 
     if (mode === 'score') {
-        if(scoreForm) scoreForm.style.display = 'block';
+        scoreForm.style.display = 'block';
         modeTitle.innerText = "📝 สแกนบันทึกคะแนนงาน";
         tabScore.classList.add('bg-light', 'text-primary');
         tabScore.classList.remove('text-muted');
         tabAtt.classList.add('text-muted');
         tabAtt.classList.remove('bg-light', 'text-primary');
     } else {
-        if(scoreForm) scoreForm.style.display = 'none';
+        scoreForm.style.display = 'none';
         modeTitle.innerText = "📷 สแกนเช็คชื่อเข้าเรียน";
         tabAtt.classList.add('bg-light', 'text-primary');
         tabAtt.classList.remove('text-muted');
@@ -107,24 +54,13 @@ function switchMode(mode) {
     }
 }
 
-// --- ระบบรักษาความปลอดภัย ---
-
-function unlockTeacherMode() {
-    const pin = prompt("กรุณากรอกรหัสผ่านเพื่อเข้าสู่โหมดครู:");
-    if (pin === TEACHER_PIN) {
-        const section = document.getElementById('teacher-section');
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth' });
-    } else if (pin !== null) {
-        alert("รหัสผ่านไม่ถูกต้อง!");
-    }
-}
-
-// --- ฟังก์ชันกล้องและการสแกน ---
+// --- ฟังก์ชันกล้อง (Camera Functions) ---
 
 async function startCamera() {
     const status = document.getElementById('status');
-    if (html5QrCode && html5QrCode.isScanning) { await html5QrCode.stop(); }
+    if (html5QrCode && html5QrCode.isScanning) {
+        await html5QrCode.stop();
+    }
     status.innerText = "กำลังเชื่อมต่อกล้อง...";
     try {
         html5QrCode = new Html5Qrcode("reader");
@@ -151,6 +87,9 @@ async function stopCamera() {
     }
 }
 
+// --- ฟังก์ชันจัดการข้อมูล (Data Handling) ---
+
+// เมื่อสแกน QR Code สำเร็จ
 async function onScanSuccess(decodedText) {
     if (!currentClassId) {
         alert("กรุณาเลือกห้องเรียนก่อนเริ่มสแกนครับ");
@@ -161,97 +100,66 @@ async function onScanSuccess(decodedText) {
     const assignmentId = document.getElementById('assignment-select').value;
     const score = document.getElementById('input-score').value;
 
-    playBeep();
-
-    const params = new URLSearchParams();
     if (currentMode === 'score') {
+        // --- โหมดบันทึกคะแนน ---
         if (!assignmentId || !score) {
-            alert("กรุณาเลือกใบงานและระบุคะแนนก่อนสแกน!");
+            alert("กรุณาเลือกใบงานและระบุคะแนนก่อนสแกนครับ!");
             return;
         }
         status.innerText = "กำลังบันทึกคะแนน...";
+        const params = new URLSearchParams();
         params.append('action', 'submitWork');
         params.append('userId', decodedText);
         params.append('assignmentId', assignmentId);
         params.append('score', score);
+
+        try {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+            status.innerText = "✅ บันทึกคะแนนสำเร็จ: " + decodedText;
+        } catch (e) { status.innerText = "❌ เกิดข้อผิดพลาดในการบันทึก"; }
+
     } else {
+        // --- โหมดเช็คชื่อปกติ ---
         status.innerText = "กำลังบันทึกการเข้าเรียน...";
+        const params = new URLSearchParams();
         params.append('action', 'record');
         params.append('qrData', decodedText);
         params.append('classId', currentClassId);
-    }
 
-    try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-        status.innerText = "✅ บันทึกสำเร็จ: " + decodedText;
-        status.className = "status-badge bg-success mb-3";
-        
-        if (currentMode === 'score') {
-            setTimeout(() => { loadScoreSummary(); loadComparisonChart(); }, 1000);
-        } else {
+        try {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+            status.innerText = "✅ เช็คชื่อสำเร็จ: " + decodedText;
+            // หน่วงเวลาเล็กน้อยเพื่อให้ชีตอัปเดตแล้วโหลด Dashboard ใหม่
             setTimeout(() => loadClassData(currentClassId), 1500);
-        }
-    } catch (e) { 
-        status.innerText = "❌ ทำรายการล้มเหลว"; 
-        status.className = "status-badge bg-danger mb-3";
+        } catch (e) { status.innerText = "❌ เช็คชื่อล้มเหลว"; }
     }
 }
 
-// --- ฟังก์ชันจัดการข้อมูล (API) ---
-
-async function addNewClass() {
-    const level = document.getElementById('new-level').value;
-    const name = document.getElementById('new-class-name').value;
-    if(!name) return alert("ระบุชื่อห้องด้วยครับ");
-
-    const params = new URLSearchParams();
-    params.append('action', 'addClass');
-    params.append('level', level);
-    params.append('name', name);
-
+// ดึงรายชื่อใบงานจาก Google Sheets
+async function loadAssignments(classId) {
+    const select = document.getElementById('assignment-select');
     try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-        alert(`สร้างห้องเรียน ${level} ${name} สำเร็จ!`);
-        // ในระบบจริงควรดึงข้อมูลใหม่จาก Server แต่เบื้องต้น reload เพื่อความง่าย
-        location.reload(); 
-    } catch (e) { alert("ล้มเหลว"); }
-}
-
-async function loadComparisonChart() {
-    try {
-        const response = await fetch(`${API_URL}?action=getClassComparison`);
-        const data = await response.json();
-        const ctx = document.getElementById('comparisonChart').getContext('2d');
-        if (comparisonChartObj) comparisonChartObj.destroy();
+        const response = await fetch(`${API_URL}?action=getAssignments&classId=${classId}`);
+        const list = await response.json();
         
-        comparisonChartObj = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.map(i => i.className),
-                datasets: [{
-                    label: 'คะแนนเฉลี่ย',
-                    data: data.map(i => i.averageScore),
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
-            }
+        select.innerHTML = '<option value="">-- เลือกชิ้นงาน --</option>';
+        list.forEach(item => {
+            select.innerHTML += `<option value="${item.id}">${item.title}</option>`;
         });
-    } catch (e) { console.error("โหลดกราฟเปรียบเทียบไม่สำเร็จ", e); }
+    } catch (e) {
+        console.error("โหลดใบงานล้มเหลว:", e);
+    }
 }
 
+// ดึงข้อมูล Dashboard (ตาราง + กราฟ)
 async function loadClassData(classId) {
     const tableBody = document.getElementById('att-table');
-    if(!tableBody) return;
     tableBody.innerHTML = '<tr><td colspan="3" class="text-center">กำลังอัปเดต...</td></tr>';
 
     try {
         const response = await fetch(`${API_URL}?action=getDashboard&classId=${classId}`);
         const res = await response.json();
+        
         let html = '';
         if (res.attendanceList && res.attendanceList.length > 0) {
             res.attendanceList.forEach(item => {
@@ -265,23 +173,28 @@ async function loadClassData(classId) {
         tableBody.innerHTML = html;
         updateChart(res.stats);
     } catch (e) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">โหลดล้มเหลว</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">โหลดข้อมูลล้มเหลว</td></tr>';
     }
 }
 
-// --- ฟังก์ชันเสริมอื่นๆ ---
+// อัปเดตกราฟ Doughnut
+function updateChart(stats) {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    const total = stats.present + stats.late + stats.absent;
+    const percent = total > 0 ? Math.round(((stats.present + stats.late) / total) * 100) : 0;
+    document.getElementById('total-percent').innerText = percent + "%";
 
-function playBeep() {
-    const beep = document.getElementById('beep-sound');
-    if (beep) {
-        beep.currentTime = 0;
-        beep.play().catch(e => console.log("Audio play blocked"));
-    }
-}
-
-function clearScore() {
-    const input = document.getElementById('input-score');
-    const select = document.getElementById('assignment-select');
-    if(input) input.value = '';
-    if(select) select.selectedIndex = 0;
+    if (myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['มา', 'สาย', 'ขาด'],
+            datasets: [{
+                data: [stats.present, stats.late, stats.absent],
+                backgroundColor: ['#1e40af', '#f59e0b', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '75%' }
+    });
 }
