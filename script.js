@@ -179,26 +179,35 @@ function showToast(msg) {
 }
 
 // 5. ระบบเพิ่มห้องเรียนใหม่ (ป้องกันการสร้างซ้ำและอัปเดต UI ทันที)
+// แก้ไขฟังก์ชัน addNewClass (เพิ่มห้องเรียน)
 async function addNewClass() {
-    const level = document.getElementById('new-level').value;
-    const name = document.getElementById('new-class-name').value;
-    if(!name) return alert("กรุณาระบุเลขห้อง");
-
-    const params = new URLSearchParams();
-    params.append('action', 'addClass');
-    params.append('level', level);
-    params.append('name', name);
-
+    // ... โค้ดส่งข้อมูลเดิม ...
     try {
         const response = await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
         alert("บันทึกคำขอสร้างห้องเรียนแล้ว");
+        
+        // --- ส่วนที่เพิ่มใหม่เพื่อปิดหน้าต่าง ---
+        document.getElementById('teacher-section').style.display = 'none'; 
+        // เคลียร์ค่าในช่องกรอก
         document.getElementById('new-class-name').value = '';
-        renderClassButtons(level); // รีโหลดปุ่มใหม่
-    } catch (e) { 
-        alert("ล้มเหลว: " + e.message); 
-    }
+        
+        renderClassButtons(level); 
+    } catch (e) { alert("ล้มเหลว: " + e.message); }
 }
 
+// แก้ไขฟังก์ชัน addNewAssignment (เพิ่มใบงาน)
+async function addNewAssignment() {
+    // ... โค้ดส่งข้อมูลเดิม ...
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("✅ เพิ่มใบงานเรียบร้อยแล้ว");
+        
+        // --- ส่วนที่เพิ่มใหม่เพื่อปิดหน้าต่าง ---
+        document.getElementById('teacher-section').style.display = 'none';
+        document.getElementById('new-assignment').value = ''; 
+        
+    } catch (e) { alert("❌ เกิดข้อผิดพลาด"); }
+}
 // 6. ปุ่มเพิ่มใบงานใหม่ (สำหรับโหมดครู)
 async function addNewAssignment() {
     const asgnName = document.getElementById('new-assignment').value;
