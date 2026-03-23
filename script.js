@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxDP66bKJmhiMRke5qqWDmKE6Wx_zQsWWCCJjHTXWcKLqXlFe2ekYQd1vHH5w146Dgt/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyWS25cnJc2-pNvWvS-jCXQaMSOG08loICqveYwPIsclxYie1-uQCGXKAQJzL7MiZjA/exec";
 
 let html5QrCode;
 let comparisonChart;
@@ -318,6 +318,30 @@ function deleteWork(workId) {
     }
 }
 
+// ตัวอย่างปุ่มในรายการห้องเรียน
+// <span class="btn-delete" onclick="handleDeleteClass('ปวช 1/1')"><i class="fas fa-trash"></i></span>
+
+function handleDeleteClass(id) {
+    if (confirm(`ยืนยันการลบห้อง ${id} ?`)) {
+        google.script.run
+            .withSuccessHandler(res => {
+                alert("ลบห้องเรียนเรียบร้อยแล้ว");
+                location.reload(); // หรือเรียกฟังก์ชันโหลดรายการใหม่
+            })
+            .deleteClassFromSheet(id);
+    }
+}
+
+function handleDeleteWork(id, name) {
+    if (confirm(`ยืนยันการลบงาน "${name}" ? คะแนนทั้งหมดจะถูกลบไปด้วย`)) {
+        google.script.run
+            .withSuccessHandler(res => {
+                alert("ลบใบงานเรียบร้อยแล้ว");
+                loadAssignments(); // เรียกฟังก์ชันอัปเดตรายการงานในหน้าจอ
+            })
+            .deleteWorkFromSheet(id);
+    }
+}
 
 // --- 5. กราฟและการแสดงผลข้อมูล ---
 
