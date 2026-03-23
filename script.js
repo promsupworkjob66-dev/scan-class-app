@@ -220,20 +220,23 @@ async function stopCamera() {
         document.getElementById('status').className = "status-badge bg-secondary mb-3";
     }
 }
-
 async function onScanSuccess(decodedText) {
     if (isProcessing) return;
     isProcessing = true;
 
-    // เล่นเสียงแจ้งเตือน (ตรวจสอบชื่อ ID ให้ตรงกับใน HTML)
-    try { 
-        const beep = document.getElementById('beep-sound') || document.getElementById('success-sound');
-        if(beep) beep.play(); 
-    } catch(e){}
+    // --- ส่วนของเสียงปี๊บ ---
+    const beep = document.getElementById('beep-sound');
+    if (beep) {
+        beep.currentTime = 0; // รีเซ็ตเสียงไปที่เริ่มต้น (เผื่อกรณีสแกนรัว)
+        beep.play().catch(e => {
+            console.log("Browser บล็อกการเล่นเสียงอัตโนมัติ: ", e.message);
+        });
+    }
 
     const status = document.getElementById('status');
     const params = new URLSearchParams();
 
+    // ... (ส่วนลอจิกการส่งข้อมูลเดิมของคุณครู) ...
     if (currentMode === 'score') {
         const asgnId = document.getElementById('assignment-select').value;
         const score = document.getElementById('input-score').value;
@@ -257,13 +260,10 @@ async function onScanSuccess(decodedText) {
         await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
         status.innerText = "✅ สำเร็จ: " + decodedText;
         showToast("✅ บันทึก " + decodedText + " เรียบร้อย!");
-        
-        // อัปเดตตารางสรุปคะแนนทันที (Real-time)
         loadScoreSummary(); 
     } catch (e) { 
         status.innerText = "❌ บันทึกล้มเหลว"; 
     } finally {
-        // หน่วงเวลา 2 วินาทีก่อนรับสแกนถัดไป เพื่อป้องกันข้อมูลซ้ำ
         setTimeout(() => { isProcessing = false; }, 2000);
     }
 }
