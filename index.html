@@ -47,42 +47,61 @@
         </div>
 
 <section id="teacher-section" style="display:none;" class="main-card border-warning p-4 mb-4 shadow animate-fadeIn">
-    <span class="close-btn" onclick="closeTeacherSection()" style="cursor:pointer;">&times;</span>
+    <span class="close-btn" onclick="closeTeacherSection()" style="cursor:pointer; position: absolute; right: 15px; top: 10px; font-size: 24px;">&times;</span>
     
     <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
         <h5 class="fw-bold text-dark mb-0">🛠️ Teacher Settings (โหมดครู)</h5>
         <button class="btn btn-sm btn-outline-secondary" onclick="changePassword()">🔑 เปลี่ยนรหัสครู</button>
     </div>
     
-    <div class="row g-3">
+    <div class="row g-4">
         <div class="col-md-6 border-end">
-            <div class="p-3 rounded bg-light">
-                <label class="fw-bold small text-primary mb-2">➕ เพิ่มห้องเรียนใหม่</label>
-                <div class="input-group">
-                    <select id="new-level" class="form-select form-select-sm" style="max-width: 100px;">
+            <h6 class="text-primary fw-bold"><i class="bi bi-plus-circle-fill"></i> จัดการห้องเรียน</h6>
+            <div class="p-3 rounded bg-light mb-3">
+                <label class="form-label small text-muted">ระดับชั้น และ ชื่อห้อง (เช่น 1/1)</label>
+                <div class="input-group input-group-sm">
+                    <select id="new-level" class="form-select" style="max-width: 80px;">
                         <option value="ปวช">ปวช.</option>
                         <option value="ปวส">ปวส.</option>
                     </select>
-                    <input type="text" id="new-class-name" class="form-control form-control-sm" placeholder="เช่น 1/1">
-                    <button class="btn btn-success btn-sm" onclick="addNewClass()">สร้าง</button>
+                    <input type="text" id="new-class-name" class="form-control" placeholder="ระบุเลขห้อง...">
+                    <button class="btn btn-success" onclick="addNewClass()">สร้าง</button>
                 </div>
             </div>
+            
+            <label class="form-label small text-muted">จัดการห้องเรียนที่มีอยู่ (คลิกเลือก/กดลบ)</label>
+            <div id="existing-classes-list" class="list-group border rounded shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                </div>
         </div>
         
         <div class="col-md-6">
-            <div class="p-3 rounded bg-light">
-                <label class="fw-bold small text-primary mb-2">⚙️ ตั้งค่าห้อง: <span id="setting-class-name">-</span></label>
-                <div class="row g-2">
-                    <div class="col-6"><input type="time" id="start-time" class="form-control form-control-sm" value="08:30"></div>
-                    <div class="col-6"><input type="number" id="late-limit" class="form-control form-control-sm" placeholder="สาย (นาที)" value="15"></div>
-                    <div class="col-12 mt-2">
-                        <div class="input-group">
-                            <input type="text" id="new-assignment" class="form-control form-control-sm" placeholder="ชื่อใบงานใหม่...">
-                            <button class="btn btn-primary btn-sm" onclick="addNewAssignment()">เพิ่มงาน</button>
-                        </div>
+            <h6 class="text-primary fw-bold">
+                <i class="bi bi-gear-fill"></i> ตั้งค่าห้อง: <span id="setting-class-display" class="badge bg-primary">ยังไม่ได้เลือก</span>
+            </h6>
+            
+            <div class="p-3 rounded bg-light mb-3 mt-2">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small text-muted">เวลาเริ่มเข้าเรียน</label>
+                        <input type="time" id="start-time" class="form-control form-control-sm" value="08:30">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">เวลาสิ้นสุด (เช็คสาย)</label>
+                        <input type="time" id="end-time" class="form-control form-control-sm" value="09:00">
                     </div>
                 </div>
+
+                <label class="form-label small text-muted">ชื่อใบงาน และ คะแนนเต็ม</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="new-assignment" class="form-control" placeholder="ระบุชื่อใบงาน...">
+                    <input type="number" id="new-assignment-score" class="form-control" placeholder="เต็ม" style="max-width: 60px;" value="10">
+                    <button class="btn btn-primary" onclick="addNewAssignment()">เพิ่มงาน</button>
+                </div>
             </div>
+
+            <label class="form-label small text-muted">รายการใบงานในห้องนี้ (กดถังขยะเพื่อลบ)</label>
+            <div id="existing-works-list" class="list-group border rounded shadow-sm" style="max-height: 150px; overflow-y: auto;">
+                </div>
         </div>
     </div>
 </section>
