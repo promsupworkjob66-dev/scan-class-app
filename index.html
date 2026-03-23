@@ -49,7 +49,7 @@
         <section id="teacher-section" style="display:none;" class="main-card border-warning p-4 mb-4 shadow animate-fadeIn">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                 <h5 class="fw-bold text-dark mb-0">🛠️ Teacher Settings (โหมดครู)</h5>
-                <button class="btn-close" onclick="document.getElementById('teacher-section').style.display='none'"></button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="changePassword()">🔑 เปลี่ยนรหัสครู</button>
             </div>
             <div class="row g-3">
                 <div class="col-md-6 border-end">
@@ -96,7 +96,9 @@
                     <div id="score-form" style="display:none;" class="mb-4 p-3 border rounded bg-light animate-fadeIn">
                         <div class="row g-2">
                             <div class="col-8">
-                                <select id="assignment-select" class="form-select border-primary"></select>
+                                <select id="assignment-select" class="form-select" onchange="onAssignmentChange()">
+                                <option value="">-- เลือกใบงาน --</option>
+                                </select>
                             </div>
                             <div class="col-4">
                                 <input type="number" id="input-score" class="form-control border-primary" placeholder="คะแนน">
