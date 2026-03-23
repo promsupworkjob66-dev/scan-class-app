@@ -21,11 +21,22 @@ function unlockTeacherMode() {
     }
 }
 
+// --- ฟังก์ชันปิดหน้าต่างโหมดครูและล้างค่า ---
 function closeTeacherSection() {
     document.getElementById('teacher-section').style.display = 'none';
-    // เคลียร์ค่าที่ค้างอยู่ในช่องกรอก
     document.getElementById('new-class-name').value = '';
     document.getElementById('new-assignment').value = '';
+}
+
+function unlockTeacherMode() {
+    const pass = prompt("กรุณากรอกรหัสผ่านผู้สอน:");
+    if (pass === teacherPassword) {
+        const section = document.getElementById('teacher-section');
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        alert("❌ รหัสผ่านไม่ถูกต้อง");
+    }
 }
 
 function changePassword() {
@@ -37,6 +48,79 @@ function changePassword() {
     }
 }
 
+// --- เพิ่มห้องเรียนใหม่ ---
+async function addNewClass() {
+    const level = document.getElementById('new-level').value;
+    const className = document.getElementById('new-class-name').value;
+    if (!className) return alert("กรุณาระบุชื่อห้องเรียน");
+
+    const params = new URLSearchParams();
+    params.append('action', 'addClass'); // ปรับให้ตรงกับ GAS ของคุณครู
+    params.append('level', level);
+    params.append('name', className);
+
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("✅ สร้างห้อง " + level + " " + className + " สำเร็จ");
+        closeTeacherSection(); // ปิดหน้าต่าง
+        filterLevel(level);    // อัปเดตปุ่มห้องเรียน
+    } catch (e) { alert("เกิดข้อผิดพลาด"); }
+}
+
+// --- เพิ่มใบงานใหม่ ---
+async function addNewAssignment() {
+    const asgnName = document.getElementById('new-assignment').value;
+    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อน");
+    if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
+
+    const params = new URLSearchParams();
+    params.append('action', 'addNewAssignment');
+    params.append('classId', currentClassId);
+    params.append('assignmentName', asgnName);
+
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("✅ เพิ่มใบงาน " + asgnName + " เรียบร้อย");
+        closeTeacherSection(); // ปิดหน้าต่าง
+        loadAssignments(currentClassId); // โหลด Dropdown ใหม่
+    } catch (e) { alert("เกิดข้อผิดพลาด"); }
+}
+
+// --- การแสดงผลปุ่มและเลือกห้อง ---
+function filterLevel(level) {
+    document.querySelectorAll('#levelTab button').forEach(btn => btn.classList.remove('active'));
+    const activeBtnId = level === 'ปวช' ? 'btn-level-pvc' : 'btn-level-pvs';
+    document.getElementById(activeBtnId).classList.add('active');
+    renderClassButtons(level);
+}
+
+function renderClassButtons(level) {
+    const container = document.getElementById('class-buttons');
+    container.innerHTML = '<div class="text-center p-3">กำลังโหลด...</div>';
+    
+    fetch(`${API_URL}?action=getClasses`)
+        .then(res => res.json())
+        .then(data => {
+            container.innerHTML = '';
+            const filtered = data.filter(c => c.level === level);
+            filtered.forEach(item => {
+                const displayName = item.name || item.id;
+                const col = document.createElement('div');
+                col.className = 'col-4 col-md-3';
+                col.innerHTML = `<div class="card card-btn text-center p-3 shadow-sm" onclick="selectClass('${displayName}', this)">${displayName}</div>`;
+                container.appendChild(col);
+            });
+        });
+}
+
+function selectClass(classId, element) {
+    currentClassId = classId;
+    document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+    document.getElementById('selected-class').innerText = "จัดการห้อง: " + classId;
+    document.getElementById('setting-class-name').innerText = classId;
+    loadAssignments(classId);
+}
 // --- 2. การจัดการห้องเรียน ---
 
 function filterLevel(level) {
