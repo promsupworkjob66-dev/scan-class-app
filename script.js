@@ -5,11 +5,12 @@ let comparisonChart;
 let currentClassId = '';
 let currentMode = 'attendance';
 let allClassData = []; 
+let teacherPassword = localStorage.getItem('teacherPass') || '1234'; // ดึงรหัสที่บันทึกไว้ หรือใช้ 1234 เป็นค่าเริ่มต้น
 
-// 1. ระบบปลดล็อกโหมดครู
+// 1. ระบบปลดล็อกโหมดครู (ปรับให้ใช้รหัสที่ตั้งค่าได้)
 function unlockTeacherMode() {
-    const pass = prompt("กรุณากรอกรหัสผ่านผู้สอน (Teacher Password):");
-    if (pass === "1234") {
+    const pass = prompt("กรุณากรอกรหัสผ่านผู้สอน:");
+    if (pass === teacherPassword) {
         const section = document.getElementById('teacher-section');
         section.style.display = 'block'; 
         section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -19,6 +20,15 @@ function unlockTeacherMode() {
     }
 }
 
+// เพิ่มฟังก์ชัน: เปลี่ยนรหัสผ่านครู
+function changePassword() {
+    const newPass = prompt("ระบุรหัสผ่านใหม่:");
+    if (newPass) {
+        teacherPassword = newPass;
+        localStorage.setItem('teacherPass', newPass);
+        alert("✅ เปลี่ยนรหัสผ่านสำเร็จ ครั้งหน้าใช้รหัสใหม่นี้ได้เลยครับ");
+    }
+}
 // 2. ฟังก์ชันคัดกรอง ปวช. / ปวส.
 function filterLevel(level) {
     document.querySelectorAll('#levelTab button').forEach(btn => btn.classList.remove('active'));
@@ -62,27 +72,110 @@ function renderClassButtons(level) {
         });
 }
 
-// 4. ฟังก์ชันเลือกห้องเรียน (ทำให้ตัวแปร currentClassId ไม่ว่าง)
+// 4. ฟังก์ชันเลือกห้องเรียน (ปรับปรุงการแสดงผล UI)
 function selectClass(classId, element) {
     if(!classId || classId.includes('T00:00')) {
         alert("ข้อมูลห้องเรียนไม่ถูกต้อง กรุณาลบแถวใน Google Sheets แล้วสร้างใหม่ครับ");
         return;
     }
     
-    currentClassId = classId; // เก็บชื่อห้องเข้าตัวแปรกลาง
-    
+    currentClassId = classId;
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
 
-    // แสดงชื่อห้องที่เลือกให้ชัดเจน
-    document.getElementById('selected-class').innerText = "จัดการห้อง: " + classId;
-    document.getElementById('selected-class').className = "status-badge bg-primary shadow-sm mb-3";
+    // อัปเดต UI หน้าแรก
+    const mainLabel = document.getElementById('selected-class');
+    if(mainLabel) {
+        mainLabel.innerText = "จัดการห้อง: " + classId;
+        mainLabel.className = "status-badge bg-primary shadow-sm mb-3";
+    }
     
-    // สำคัญ: ต้องอัปเดตชื่อห้องในโหมดตั้งค่าด้วย เพื่อให้กดเพิ่มงานได้
+    // อัปเดต UI โหมดครู
     const settingLabel = document.getElementById('setting-class-name');
     if(settingLabel) settingLabel.innerText = classId;
+    
+    const teacherLabel = document.getElementById('selected-class-label');
+    if(teacherLabel) teacherLabel.innerText = "ห้อง: " + classId;
 
     loadAssignments(classId); 
+}
+
+// 5. ระบบดึงและเลือกใบงาน (เพิ่มการเด้งของคะแนนอัตโนมัติ)
+function loadAssignments(classId) {
+    const select = document.getElementById('assignment-select');
+    if(!select) return;
+    
+    select.innerHTML = '<option value="">กำลังโหลดงาน...</option>';
+    fetch(`${API_URL}?action=getAssignments&classId=${classId}`)
+        .then(res => res.json())
+        .then(data => {
+            select.innerHTML = '<option value="">-- เลือกใบงาน --</option>';
+            data.forEach(asgn => {
+                // เก็บค่าคะแนนไว้ใน data-score เพื่อเรียกใช้ตอนเลือก
+                select.innerHTML += `<option value="${asgn.id}" data-score="${asgn.points || 10}">${asgn.title}</option>`;
+            });
+        })
+        .catch(() => {
+            select.innerHTML = '<option value="">โหลดงานไม่สำเร็จ</option>';
+        });
+}
+
+function onAssignmentChange() {
+    const select = document.getElementById('assignment-select');
+    const scoreInput = document.getElementById('input-score');
+    if(!select || !scoreInput) return;
+
+    const selectedOption = select.options[select.selectedIndex];
+    const defaultScore = selectedOption.getAttribute('data-score') || '10';
+    scoreInput.value = defaultScore; // คะแนนขึ้นโชว์ทันที
+}
+
+// 6. ระบบสแกนและบันทึก (เพิ่ม Pop-up และเสียง)
+async function onScanSuccess(decodedText) {
+    try { document.getElementById('beep-sound').play(); } catch(e){}
+    
+    const status = document.getElementById('status');
+    const params = new URLSearchParams();
+
+    if (currentMode === 'score') {
+        const asgnId = document.getElementById('assignment-select').value;
+        const score = document.getElementById('input-score').value;
+        if(!asgnId || !score) return alert("กรุณาเลือกงานและระบุคะแนน");
+        
+        params.append('action', 'submitWork');
+        params.append('userId', decodedText);
+        params.append('assignmentId', asgnId);
+        params.append('score', score);
+    } else {
+        params.append('action', 'record');
+        params.append('qrData', decodedText);
+        params.append('classId', currentClassId);
+    }
+
+    status.innerText = "⏳ กำลังบันทึกข้อมูล...";
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        
+        // แสดงสถานะที่หน้าจอและ Pop-up
+        status.innerText = "✅ บันทึกสำเร็จ: " + decodedText;
+        showToast("✅ บันทึก " + decodedText + " เรียบร้อย!");
+        
+        if(currentMode === 'attendance' && typeof loadClassData === "function") {
+             setTimeout(() => loadClassData(currentClassId), 1000);
+        }
+    } catch (e) { 
+        status.innerText = "❌ บันทึกล้มเหลว"; 
+        showToast("❌ เกิดข้อผิดพลาด");
+    }
+}
+
+// ฟังก์ชัน Pop-up แจ้งเตือน
+function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'scan-toast';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
 }
 
 // 5. ระบบเพิ่มห้องเรียนใหม่ (ป้องกันการสร้างซ้ำและอัปเดต UI ทันที)
