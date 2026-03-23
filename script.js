@@ -67,10 +67,20 @@ function renderClassButtons(level) {
 
             filtered.forEach(item => {
                 const col = document.createElement('div');
-                col.className = 'col-4 col-md-3';
+                col.className = 'col-4 col-md-3 mb-2';
+                
+                // --- ส่วนที่ปรับเพิ่ม: แยกสีตามระดับ ---
+                let colorClass = level === 'ปวช' ? 'btn-pvc' : 'btn-pvs';
+                
                 const displayName = item.name || item.id; 
-                col.innerHTML = `<div class="card card-btn text-center p-3 shadow-sm" 
-                                onclick="selectClass('${displayName}', this)">${displayName}</div>`;
+                // ป้องกันค่าวันที่หลุดมาแสดง (ถ้าลืมแก้ใน Sheets)
+                const finalName = String(displayName).includes('T00:00') ? "แก้ใน Sheets" : displayName;
+
+                col.innerHTML = `
+                    <div class="card card-btn text-center p-3 shadow-sm ${colorClass}" 
+                         onclick="selectClass('${finalName}', this)">
+                         ${finalName}
+                    </div>`;
                 container.appendChild(col);
             });
         });
