@@ -298,6 +298,26 @@ function showToast(msg) {
         if(sync) sync.style.display = 'none';
     }, 2500);
 }
+// ฟังก์ชันลบห้องเรียน
+function deleteClass(classId) {
+    if (confirm('ยืนยันการลบห้องเรียนนี้? ข้อมูลนักเรียนในห้องจะหายทั้งหมด')) {
+        google.script.run.withSuccessHandler(() => {
+            alert('ลบห้องเรียนเรียบร้อย');
+            loadTeacherSettings(); // โหลดรายการใหม่
+        }).deleteClassFromSheet(classId); 
+    }
+}
+
+// ฟังก์ชันลบงาน
+function deleteWork(workId) {
+    if (confirm('ยืนยันการลบงานนี้? คะแนนที่บันทึกไว้จะหายทั้งหมด')) {
+        google.script.run.withSuccessHandler(() => {
+            alert('ลบงานเรียบร้อย');
+            loadWorkList(); // โหลดรายการใหม่
+        }).deleteWorkFromSheet(workId);
+    }
+}
+
 
 // --- 5. กราฟและการแสดงผลข้อมูล ---
 
@@ -354,3 +374,4 @@ window.onload = () => {
     filterLevel('ปวช');
     updateComparisonChart();
 };
+
