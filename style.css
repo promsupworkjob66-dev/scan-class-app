@@ -224,3 +224,24 @@ body {
     transition: 0.2s;
     cursor: pointer;
 }
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+.btn-delete {
+    color: #dc3545;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+.btn-delete:hover {
+    background-color: #ffeef0;
+}
+.form-label {
+    margin-bottom: 2px;
+    font-weight: 500;
+}
