@@ -86,6 +86,7 @@ function renderClassButtons(level) {
         });
 }
 
+// แก้ไขฟังก์ชันเลือกห้องเพื่อให้แสดงในหน้าตั้งค่าด้วย
 function selectClass(classId, element) {
     if(!classId || String(classId).includes('T00:00')) {
         alert("ข้อมูลห้องเรียนผิดพลาด กรุณาลบและสร้างใหม่ใน Sheets");
@@ -93,14 +94,73 @@ function selectClass(classId, element) {
     }
     currentClassId = classId;
     document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
-    element.classList.add('active');
+    if(element) element.classList.add('active');
 
     document.getElementById('selected-class').innerText = "จัดการห้อง: " + classId;
     document.getElementById('selected-class').className = "status-badge bg-primary shadow-sm mb-3";
-    document.getElementById('setting-class-name').innerText = classId;
-
+    
+    // อัปเดตในโหมดครู
+    document.getElementById('setting-class-display').innerText = classId;
+    renderWorkListInSettings(classId); // โหลดรายการงานพร้อมปุ่มลบ
+    
     loadAssignments(classId); 
-    loadScoreSummary(); // โหลดตารางคะแนนของห้องที่เลือกทันที
+    loadScoreSummary();
+}
+
+// โหลดรายการห้องเรียนพร้อมปุ่มลบในโหมดครู
+function renderClassListInSettings() {
+    const list = document.getElementById('existing-classes-list');
+    list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลด...</div>';
+    
+    fetch(`${API_URL}?action=getClasses`)
+        .then(res => res.json())
+        .then(data => {
+            list.innerHTML = '';
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+                div.innerHTML = `
+                    <span style="cursor:pointer" onclick="selectClass('${item.id}', null)">${item.level} ${item.name}</span>
+                    <i class="bi bi-trash3-fill text-danger btn-delete" onclick="handleDeleteClass('${item.id}')"></i>
+                `;
+                list.appendChild(div);
+            });
+        });
+}
+
+// โหลดรายการใบงานพร้อมปุ่มลบในโหมดครู
+function renderWorkListInSettings(classId) {
+    const list = document.getElementById('existing-works-list');
+    list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลดรายการงาน...</div>';
+    
+    fetch(`${API_URL}?action=getAssignments&classId=${classId}`)
+        .then(res => res.json())
+        .then(data => {
+            list.innerHTML = '';
+            if(data.length === 0) list.innerHTML = '<div class="p-2 text-center text-muted small">ไม่มีงานในห้องนี้</div>';
+            data.forEach(work => {
+                const div = document.createElement('div');
+                div.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
+                div.innerHTML = `
+                    <small>${work.title} (${work.points} ค.)</small>
+                    <i class="bi bi-trash3-fill text-danger btn-delete" onclick="handleDeleteWork('${work.id}', '${work.title}')"></i>
+                `;
+                list.appendChild(div);
+            });
+        });
+}
+
+// เพิ่มการเรียกโหลดห้องเมื่อปลดล็อกโหมดครู
+function unlockTeacherMode() {
+    const pass = prompt("กรุณากรอกรหัสผ่านผู้สอน:");
+    if (pass === teacherPassword) {
+        renderClassListInSettings(); // โหลดรายการห้องทันที
+        const section = document.getElementById('teacher-section');
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        alert("❌ รหัสผ่านไม่ถูกต้อง");
+    }
 }
 
 // --- 3. การจัดการใบงานและคะแนน (โหมดครู & สแกนเนอร์) ---
