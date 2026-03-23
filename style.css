@@ -195,3 +195,32 @@ body {
     80% { opacity: 1; top: 20px; }
     100% { opacity: 0; top: 0; }
 }
+
+/* สีสำหรับระดับ ปวช. (โทนสีฟ้า/น้ำเงินตามธีมเดิม) */
+.btn-pvc {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+    border: 2px solid #0d6efd !important;
+}
+.btn-pvc.active {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+/* สีสำหรับระดับ ปวส. (โทนสีส้ม/ม่วง เพื่อให้ตัดกันชัดเจน) */
+.btn-pvs {
+    background-color: #fff3e0;
+    color: #ef6c00;
+    border: 2px solid #ef6c00 !important;
+}
+.btn-pvs.active {
+    background-color: #ef6c00 !important;
+    color: white !important;
+}
+
+/* เอฟเฟกต์ตอนเอาเมาส์วาง */
+.card-btn:hover {
+    transform: translateY(-3px);
+    transition: 0.2s;
+    cursor: pointer;
+}
