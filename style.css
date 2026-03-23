@@ -176,3 +176,22 @@ body {
     80% { opacity: 1; top: 20px; }
     100% { opacity: 0; top: 0; }
 }
+.scan-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: fadeInOut 2s ease-in-out;
+}
+@keyframes fadeInOut {
+    0% { opacity: 0; top: 0; }
+    20% { opacity: 1; top: 20px; }
+    80% { opacity: 1; top: 20px; }
+    100% { opacity: 0; top: 0; }
+}
