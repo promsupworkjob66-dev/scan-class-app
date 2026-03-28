@@ -341,9 +341,9 @@ async function onScanSuccess(decodedText) {
         // --- ส่วนที่เพิ่ม: ระบบเสียงพูดอัตโนมัติ ---
         if ('speechSynthesis' in window) {
             const msg = new SpeechSynthesisUtterance();
-            msg.text = speechText;
+            msg.text = (attendanceStatus === "สาย") ? "คุณมาสายนะคะ" : "เช็คชื่อแล้วค่ะ";
             msg.lang = 'th-TH'; // กำหนดเป็นภาษาไทย
-            msg.rate = 1.0;     // ความเร็วของเสียง (0.1 - 10)
+            msg.rate = 1.2;     // ความเร็วของเสียง (0.1 - 10)
             window.speechSynthesis.speak(msg);
         }
 
