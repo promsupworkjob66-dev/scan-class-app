@@ -330,12 +330,17 @@ async function onScanSuccess(decodedText) {
         const currentTimeString = now.getHours().toString().padStart(2, '0') + ":" + 
                                 now.getMinutes().toString().padStart(2, '0');
         
-        const limitTime = document.getElementById('end-time').value; // เวลาที่ครูตั้งไว้
-        let attendanceStatus = "มาเรียน"; // ค่าเริ่มต้น
+        const limitTime = document.getElementById('end-time').value;
+        let attendanceStatus = "มาเรียน";
+        let speechText = "เช็คชื่อสำเร็จ"; // ข้อความเสียง
 
         if (limitTime && currentTimeString > limitTime) {
             attendanceStatus = "สาย";
+            speechText = "มาสาย"; // เปลี่ยนเป็นมาสาย
         }
+        
+        // เรียกใช้ฟังก์ชันเสียงพูดที่สร้างไว้ด้านบน
+        speakStatus(speechText);
 
         params.append('action', 'record');
         params.append('qrData', decodedText);
@@ -386,6 +391,54 @@ if(sync) sync.style.display = 'none';
 // <span class="btn-delete" onclick="handleDeleteClass('ปวช 1/1')"><i class="fas fa-trash"></i></span>
 
 
+// --- ส่วนที่เพิ่มกลับเข้าไปเพื่อให้ปุ่มลบทำงานได้และไม่ Error ---
+
+function handleDeleteClass(id) {
+    if (confirm(`⚠️ ยืนยันการลบห้อง ${id} ? \nข้อมูลนักเรียนและคะแนนในห้องนี้จะหายทั้งหมด`)) {
+        const params = new URLSearchParams();
+        params.append('action', 'deleteClass');
+        params.append('classId', id);
+
+        fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params })
+            .then(() => {
+                alert("✅ ลบห้องเรียนเรียบร้อยแล้ว");
+                location.reload(); // รีโหลดหน้าเพื่ออัปเดตรายการ
+            })
+            .catch(e => alert("ล้มเหลว: " + e.message));
+    }
+}
+
+function handleDeleteWork(id, title) {
+    if (confirm(`⚠️ ยืนยันการลบงาน "${title}" ? \nคะแนนของงานนี้จะถูกลบออกทั้งหมด`)) {
+        const params = new URLSearchParams();
+        params.append('action', 'deleteAssignment');
+        params.append('assignmentId', id);
+        params.append('classId', currentClassId);
+
+        fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params })
+            .then(() => {
+                alert("✅ ลบใบงานเรียบร้อยแล้ว");
+                renderWorkListInSettings(currentClassId); // อัปเดตรายการงานในหน้าตั้งค่า
+                loadAssignments(currentClassId); // อัปเดตรายการในหน้าสแกน
+            })
+            .catch(e => alert("ล้มเหลว: " + e.message));
+    }
+}
+
+// --- เพิ่มระบบเสียงพูดตามที่ต้องการ ---
+function speakStatus(text) {
+    if ('speechSynthesis' in window) {
+        // ยกเลิกเสียงที่กำลังพูดค้างอยู่ก่อนหน้า
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = (attendanceStatus === "สาย") ? "คุณมาสายนะคะ" : "เช็คชื่อแล้วค่ะ";
+        msg.lang = 'th-TH';
+        msg.rate = 1.0;
+        msg.pitch = 1.2;
+        window.speechSynthesis.speak(msg);
+    }
+}
+
 // --- 5. กราฟและการแสดงผลข้อมูล ---
 
 async function loadScoreSummary() {
@@ -418,8 +471,9 @@ body.appendChild(tr);
 
 
 window.onload = () => {
-filterLevel('ปวช');
-// โหลดเวลาที่เคยตั้งไว้กลับมาแสดง
+    filterLevel('ปวช'); // ต้องมีบรรทัดนี้เพื่อให้ปุ่มห้องเรียนขึ้น
+    
+    // โหลดค่าเวลาที่เคยตั้งไว้ (ถ้ามี)
     if(localStorage.getItem('limitTime')) {
         document.getElementById('end-time').value = localStorage.getItem('limitTime');
     }
