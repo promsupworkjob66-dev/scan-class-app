@@ -186,53 +186,6 @@
     <audio id="beep-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
     <script src="script.js"></script>
 
-    <div class="row">
-  <div class="col-md-6 border-end">
-    <h6 class="text-primary"><i class="fas fa-plus-circle"></i> เพิ่มห้องเรียนใหม่</h6>
-    <div class="mb-3">
-      <label class="form-label small text-muted">ระดับชั้น และ ชื่อห้อง (เช่น 1/1)</label>
-      <div class="input-group">
-        <select id="new-level" class="form-select" style="max-width: 100px;">
-          <option value="ปวช">ปวช.</option>
-          <option value="ปวส">ปวส.</option>
-        </select>
-        <input type="text" id="new-class-name" class="form-control" placeholder="เช่น 1/1">
-        <button class="btn btn-success" onclick="createNewClass()">สร้าง</button>
-      </div>
-    </div>
-    
-    <label class="form-label small text-muted">จัดการห้องเรียนที่มีอยู่</label>
-    <div id="existing-classes-list" class="list-group list-group-flush border rounded" style="max-height: 150px; overflow-y: auto;">
-      </div>
-  </div>
 
-  <div class="col-md-6">
-    <h6 class="text-primary"><i class="fas fa-cog"></i> ตั้งค่าห้อง: <span id="setting-class-display">-</span></h6>
-    
-    <div class="row g-2 mb-3">
-      <div class="col-6">
-        <label class="form-label small text-muted">เวลาเริ่มเข้าเรียน</label>
-        <input type="time" id="start-time" class="form-control">
-      </div>
-      <div class="col-6">
-        <label class="form-label small text-muted">เวลาสิ้นสุด (เช็คสาย)</label>
-        <input type="time" id="end-time" class="form-control">
-      </div>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label small text-muted">ชื่อใบงาน และ คะแนนเต็ม</label>
-      <div class="input-group mb-2">
-        <input type="text" id="new-work-name" class="form-control" placeholder="ชื่อใบงานใหม่...">
-        <input type="number" id="new-work-score" class="form-control" placeholder="คะแนน" style="max-width: 80px;">
-        <button class="btn btn-primary" onclick="addNewWork()">เพิ่มงาน</button>
-      </div>
-    </div>
-
-    <label class="form-label small text-muted">รายการงาน/คะแนน (กดถังขยะเพื่อลบ)</label>
-    <div id="existing-works-list" class="list-group list-group-flush border rounded" style="max-height: 150px; overflow-y: auto;">
-      </div>
-  </div>
-</div>
 </body>
 </html>
