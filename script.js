@@ -323,25 +323,37 @@ async function onScanSuccess(decodedText) {
         params.append('userId', decodedText);
         params.append('assignmentId', asgnId);
         params.append('score', score);
+    } // ... (โค้ดส่วนต้นของ onScanSuccess จนถึงบรรทัดที่แยกโหมด attendance) ...
     } else {
-        // --- ส่วนที่ปรับปรุงใหม่: เช็คเวลา สาย/ปกติ ---
         const now = new Date();
         const currentTimeString = now.getHours().toString().padStart(2, '0') + ":" + 
                                 now.getMinutes().toString().padStart(2, '0');
         
-        const limitTime = document.getElementById('end-time').value; // เวลาที่ครูตั้งไว้
-        let attendanceStatus = "มาเรียน"; // ค่าเริ่มต้น
+        const limitTime = document.getElementById('end-time').value;
+        let attendanceStatus = "มาเรียน"; 
+        let speechText = "เช็คชื่อสำเร็จ"; // ข้อความเสียงเริ่มต้น
 
         if (limitTime && currentTimeString > limitTime) {
             attendanceStatus = "สาย";
+            speechText = "มาสาย"; // เปลี่ยนเสียงพูดถ้ามาสาย
+        }
+
+        // --- ส่วนที่เพิ่ม: ระบบเสียงพูดอัตโนมัติ ---
+        if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance();
+            msg.text = speechText;
+            msg.lang = 'th-TH'; // กำหนดเป็นภาษาไทย
+            msg.rate = 1.0;     // ความเร็วของเสียง (0.1 - 10)
+            window.speechSynthesis.speak(msg);
         }
 
         params.append('action', 'record');
         params.append('qrData', decodedText);
         params.append('classId', currentClassId);
-        params.append('status', attendanceStatus); // ส่งสถานะ มาเรียน/สาย ไปที่ Sheets
-        params.append('time', currentTimeString);   // ส่งเวลาที่สแกนไปด้วย
+        params.append('status', attendanceStatus);
+        params.append('time', currentTimeString);
     }
+    // ... (โค้ดส่วนท้ายของ onScanSuccess จนจบ) ...
 
     status.innerText = "⏳ กำลังบันทึก...";
     try {
