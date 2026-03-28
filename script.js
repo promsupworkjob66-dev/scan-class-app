@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwtBw9ctpSEo6VBYQWF27jta0xem69U3wxQA-O9uwT1FESWtWrjt1VeLiNJrMzFUDlR/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzEBwpIFjVFW39EJ2B7fukd418vLwF0sPG9Amsrlgrz__tB8fiBA2CkZ_WPg6-c2Q1M/exec";
 
 let html5QrCode;
 let comparisonChart;
@@ -27,6 +27,8 @@ function closeTeacherSection() {
 document.getElementById('teacher-section').style.display = 'none';
 document.getElementById('new-class-name').value = '';
 document.getElementById('new-assignment').value = '';
+// เก็บค่าเวลาลง LocalStorage
+localStorage.setItem('limitTime', document.getElementById('end-time').value);
 }
 
 function changePassword() {
@@ -415,5 +417,8 @@ body.appendChild(tr);
 
 window.onload = () => {
 filterLevel('ปวช');
-
+// โหลดเวลาที่เคยตั้งไว้กลับมาแสดง
+    if(localStorage.getItem('limitTime')) {
+        document.getElementById('end-time').value = localStorage.getItem('limitTime');
+    }
 };
