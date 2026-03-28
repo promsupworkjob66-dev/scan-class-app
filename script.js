@@ -183,24 +183,28 @@ renderClassButtons(level);
 } catch (e) { alert("ล้มเหลว: " + e.message); }
 }
 
+// แก้ไขบรรทัดที่ 131 เป็นต้นไป
 async function addNewAssignment() {
-const asgnName = document.getElementById('new-assignment').value;
-if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
-if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
+    const asgnName = document.getElementById('new-assignment').value;
+    const asgnScore = document.getElementById('new-assignment-score').value; // ดึงคะแนนเต็มจาก input ใหม่
+    
+    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
+    if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
 
-const params = new URLSearchParams();
-params.append('action', 'addNewAssignment');
-params.append('classId', currentClassId);
-params.append('assignmentName', asgnName);
+    const params = new URLSearchParams();
+    params.append('action', 'addNewAssignment');
+    params.append('classId', currentClassId);
+    params.append('assignmentName', asgnName);
+    params.append('points', asgnScore); // เพิ่มการส่งค่าคะแนนเต็มไปด้วย
 
-try {
-await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-alert("✅ เพิ่มใบงาน: " + asgnName + " เรียบร้อยแล้ว");
-closeTeacherSection();
-loadAssignments(currentClassId);
-} catch (e) { alert("❌ เกิดข้อผิดพลาด"); }
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("✅ เพิ่มใบงาน: " + asgnName + " เรียบร้อยแล้ว");
+        // ไม่ต้อง closeTeacherSection เพื่อให้ตั้งค่าต่อได้สะดวก
+        loadAssignments(currentClassId);
+        renderWorkListInSettings(currentClassId); // อัปเดตรายการงานในหน้าตั้งค่าด้วย
+    } catch (e) { alert("❌ เกิดข้อผิดพลาด"); }
 }
-
 async function loadAssignments(classId) {
 const select = document.getElementById('assignment-select');
 if(!select) return;
