@@ -128,26 +128,27 @@ function renderClassListInSettings() {
         });
 }
 
-// โหลดรายการใบงานพร้อมปุ่มลบในโหมดครู
-function renderWorkListInSettings(classId) {
-    const list = document.getElementById('existing-works-list');
-    list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลดรายการงาน...</div>';
+// แก้ไขบรรทัดที่ 131 เป็นต้นไป
+async function addNewAssignment() {
+    const asgnName = document.getElementById('new-assignment').value;
+    const asgnScore = document.getElementById('new-assignment-score').value; // ดึงคะแนนเต็มจาก input ใหม่
     
-    fetch(`${API_URL}?action=getAssignments&classId=${classId}`)
-        .then(res => res.json())
-        .then(data => {
-            list.innerHTML = '';
-            if(data.length === 0) list.innerHTML = '<div class="p-2 text-center text-muted small">ไม่มีงานในห้องนี้</div>';
-            data.forEach(work => {
-                const div = document.createElement('div');
-                div.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
-                div.innerHTML = `
-                    <small>${work.title} (${work.points} ค.)</small>
-                    <i class="bi bi-trash3-fill text-danger btn-delete" onclick="handleDeleteWork('${work.id}', '${work.title}')"></i>
-                `;
-                list.appendChild(div);
-            });
-        });
+    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
+    if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
+
+    const params = new URLSearchParams();
+    params.append('action', 'addNewAssignment');
+    params.append('classId', currentClassId);
+    params.append('assignmentName', asgnName);
+    params.append('points', asgnScore); // เพิ่มการส่งค่าคะแนนเต็มไปด้วย
+
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        alert("✅ เพิ่มใบงาน: " + asgnName + " เรียบร้อยแล้ว");
+        // ไม่ต้อง closeTeacherSection เพื่อให้ตั้งค่าต่อได้สะดวก
+        loadAssignments(currentClassId);
+        renderWorkListInSettings(currentClassId); // อัปเดตรายการงานในหน้าตั้งค่าด้วย
+    } catch (e) { alert("❌ เกิดข้อผิดพลาด"); }
 }
 
 // เพิ่มการเรียกโหลดห้องเมื่อปลดล็อกโหมดครู
@@ -206,51 +207,7 @@ async function loadAssignments(classId) {
     if(!select) return;
     select.innerHTML = '<option value="">กำลังโหลดงาน...</option>';
     
-    try {
-        const response = await fetch(`${API_URL}?action=getAssignments&classId=${classId}`);
-        const assignments = await response.json();
-        
-        select.innerHTML = '<option value="">-- เลือกใบงาน --</option>';
-        assignmentData = {}; // ล้างข้อมูลเก่า
-        
-        assignments.forEach(asgn => {
-            const option = document.createElement('option');
-            option.value = asgn.id;
-            option.text = asgn.title || asgn.name;
-            // เก็บค่าคะแนนไว้ใน attribute และ object
-            const points = asgn.points || asgn.score || 10;
-            option.setAttribute('data-score', points);
-            select.appendChild(option);
-            
-            assignmentData[asgn.id] = points; 
-        });
-    } catch (e) {
-        select.innerHTML = '<option value="">โหลดงานไม่สำเร็จ</option>';
-    }
-}
-
-function onAssignmentChange() {
-    const select = document.getElementById('assignment-select');
-    const scoreInput = document.getElementById('input-score');
-    if(!select || !scoreInput) return;
-    
-    const selectedId = select.value;
-    if (assignmentData[selectedId]) {
-        scoreInput.value = assignmentData[selectedId];
-    } else {
-        scoreInput.value = '';
-    }
-}
-
-// --- 4. ระบบสแกนและบันทึก Real-time ---
-
-function switchMode(mode) {
-    currentMode = mode;
-    const scoreForm = document.getElementById('score-form');
-    const modeTitle = document.getElementById('mode-title');
-    const tabAtt = document.getElementById('tab-att');
-    const tabScore = document.getElementById('tab-score');
-
+   
     if (mode === 'score') {
         scoreForm.style.display = 'block';
         modeTitle.innerText = "📝 สแกนบันทึกคะแนนงาน";
@@ -433,29 +390,11 @@ async function loadScoreSummary() {
     } catch (e) { console.error("โหลดข้อมูลตารางล้มเหลว"); }
 }
 
-async function updateComparisonChart() {
-    try {
-        const res = await fetch(`${API_URL}?action=getClassComparison`);
-        const data = await res.json();
-        const ctx = document.getElementById('comparisonChart').getContext('2d');
-        if(comparisonChart) comparisonChart.destroy();
-        comparisonChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.map(d => d.className),
-                datasets: [{
-                    label: 'คะแนนเฉลี่ย',
-                    data: data.map(d => d.averageScore),
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    } catch (e) { console.error("โหลดกราฟไม่สำเร็จ"); }
-}
 
+
+// แก้ไขบรรทัดสุดท้าย (ประมาณ 304)
 window.onload = () => {
     filterLevel('ปวช');
-    updateComparisonChart();
+    // updateComparisonChart(); <--- ลบบรรทัดนี้ออก
 };
 
