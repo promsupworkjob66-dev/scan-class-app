@@ -358,50 +358,13 @@ toast.remove();
 if(sync) sync.style.display = 'none';
 }, 2500);
 }
-// ฟังก์ชันลบห้องเรียน
-function deleteClass(classId) {
-if (confirm('ยืนยันการลบห้องเรียนนี้? ข้อมูลนักเรียนในห้องจะหายทั้งหมด')) {
-google.script.run.withSuccessHandler(() => {
-alert('ลบห้องเรียนเรียบร้อย');
-loadTeacherSettings(); // โหลดรายการใหม่
-}).deleteClassFromSheet(classId); 
-}
-}
 
-// ฟังก์ชันลบงาน
-function deleteWork(workId) {
-if (confirm('ยืนยันการลบงานนี้? คะแนนที่บันทึกไว้จะหายทั้งหมด')) {
-google.script.run.withSuccessHandler(() => {
-alert('ลบงานเรียบร้อย');
-loadWorkList(); // โหลดรายการใหม่
-}).deleteWorkFromSheet(workId);
-}
-}
+
+
 
 // ตัวอย่างปุ่มในรายการห้องเรียน
 // <span class="btn-delete" onclick="handleDeleteClass('ปวช 1/1')"><i class="fas fa-trash"></i></span>
 
-function handleDeleteClass(id) {
-if (confirm(`ยืนยันการลบห้อง ${id} ?`)) {
-google.script.run
-.withSuccessHandler(res => {
-alert("ลบห้องเรียนเรียบร้อยแล้ว");
-location.reload(); // หรือเรียกฟังก์ชันโหลดรายการใหม่
-})
-.deleteClassFromSheet(id);
-}
-}
-
-function handleDeleteWork(id, name) {
-if (confirm(`ยืนยันการลบงาน "${name}" ? คะแนนทั้งหมดจะถูกลบไปด้วย`)) {
-google.script.run
-.withSuccessHandler(res => {
-alert("ลบใบงานเรียบร้อยแล้ว");
-loadAssignments(); // เรียกฟังก์ชันอัปเดตรายการงานในหน้าจอ
-})
-.deleteWorkFromSheet(id);
-}
-}
 
 // --- 5. กราฟและการแสดงผลข้อมูล ---
 
@@ -433,28 +396,8 @@ body.appendChild(tr);
 } catch (e) { console.error("โหลดข้อมูลตารางล้มเหลว"); }
 }
 
-async function updateComparisonChart() {
-try {
-const res = await fetch(`${API_URL}?action=getClassComparison`);
-const data = await res.json();
-const ctx = document.getElementById('comparisonChart').getContext('2d');
-if(comparisonChart) comparisonChart.destroy();
-comparisonChart = new Chart(ctx, {
-type: 'bar',
-data: {
-labels: data.map(d => d.className),
-datasets: [{
-label: 'คะแนนเฉลี่ย',
-data: data.map(d => d.averageScore),
-backgroundColor: 'rgba(54, 162, 235, 0.6)'
-}]
-},
-options: { responsive: true, maintainAspectRatio: false }
-});
-} catch (e) { console.error("โหลดกราฟไม่สำเร็จ"); }
-}
 
 window.onload = () => {
 filterLevel('ปวช');
-updateComparisonChart();
+
 };
