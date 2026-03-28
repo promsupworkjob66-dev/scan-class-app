@@ -295,51 +295,63 @@ document.getElementById('status').className = "status-badge bg-secondary mb-3";
 }
 }
 async function onScanSuccess(decodedText) {
-if (isProcessing) return;
-isProcessing = true;
+    if (isProcessing) return;
+    isProcessing = true;
 
-// --- ส่วนของเสียงปี๊บ ---
-const beep = document.getElementById('beep-sound');
-if (beep) {
-beep.currentTime = 0; // รีเซ็ตเสียงไปที่เริ่มต้น (เผื่อกรณีสแกนรัว)
-beep.play().catch(e => {
-console.log("Browser บล็อกการเล่นเสียงอัตโนมัติ: ", e.message);
-});
-}
+    // --- ส่วนของเสียงปี๊บ ---
+    const beep = document.getElementById('beep-sound');
+    if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(e => console.log("Audio play blocked"));
+    }
 
-const status = document.getElementById('status');
-const params = new URLSearchParams();
+    const status = document.getElementById('status');
+    const params = new URLSearchParams();
 
-// ... (ส่วนลอจิกการส่งข้อมูลเดิมของคุณครู) ...
-if (currentMode === 'score') {
-const asgnId = document.getElementById('assignment-select').value;
-const score = document.getElementById('input-score').value;
-if(!asgnId || !score) {
-alert("กรุณาเลือกงานและระบุคะแนน");
-isProcessing = false;
-return;
-}
-params.append('action', 'submitWork');
-params.append('userId', decodedText);
-params.append('assignmentId', asgnId);
-params.append('score', score);
-} else {
-params.append('action', 'record');
-params.append('qrData', decodedText);
-params.append('classId', currentClassId);
-}
+    if (currentMode === 'score') {
+        // ... (ส่วนบันทึกคะแนนเดิมของคุณครู) ...
+        const asgnId = document.getElementById('assignment-select').value;
+        const score = document.getElementById('input-score').value;
+        if(!asgnId || !score) {
+            alert("กรุณาเลือกงานและระบุคะแนน");
+            isProcessing = false;
+            return;
+        }
+        params.append('action', 'submitWork');
+        params.append('userId', decodedText);
+        params.append('assignmentId', asgnId);
+        params.append('score', score);
+    } else {
+        // --- ส่วนที่ปรับปรุงใหม่: เช็คเวลา สาย/ปกติ ---
+        const now = new Date();
+        const currentTimeString = now.getHours().toString().padStart(2, '0') + ":" + 
+                                now.getMinutes().toString().padStart(2, '0');
+        
+        const limitTime = document.getElementById('end-time').value; // เวลาที่ครูตั้งไว้
+        let attendanceStatus = "มาเรียน"; // ค่าเริ่มต้น
 
-status.innerText = "⏳ กำลังบันทึก...";
-try {
-await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-status.innerText = "✅ สำเร็จ: " + decodedText;
-showToast("✅ บันทึก " + decodedText + " เรียบร้อย!");
-loadScoreSummary(); 
-} catch (e) { 
-status.innerText = "❌ บันทึกล้มเหลว"; 
-} finally {
-setTimeout(() => { isProcessing = false; }, 2000);
-}
+        if (limitTime && currentTimeString > limitTime) {
+            attendanceStatus = "สาย";
+        }
+
+        params.append('action', 'record');
+        params.append('qrData', decodedText);
+        params.append('classId', currentClassId);
+        params.append('status', attendanceStatus); // ส่งสถานะ มาเรียน/สาย ไปที่ Sheets
+        params.append('time', currentTimeString);   // ส่งเวลาที่สแกนไปด้วย
+    }
+
+    status.innerText = "⏳ กำลังบันทึก...";
+    try {
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        status.innerText = "✅ บันทึกสำเร็จ: " + decodedText;
+        showToast(`✅ ${decodedText} (${params.get('status')})`);
+        loadScoreSummary(); 
+    } catch (e) { 
+        status.innerText = "❌ บันทึกล้มเหลว"; 
+    } finally {
+        setTimeout(() => { isProcessing = false; }, 2000);
+    }
 }
 
 function showToast(msg) {
