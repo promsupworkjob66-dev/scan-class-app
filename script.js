@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzrQbY6r_f7G17IApm0MOrckWJvBZ1bngKRQ7wGLIg0DockXrodiR2HWwfy9i-xzWRY/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzXwy4ydsEHXbal7IqbLzxHc0OWndVS3GHzusD8UXDXrTguf1IDbfA2qYeoDfZTRfs/exec";
 
 let html5QrCode;
 let comparisonChart;
@@ -131,27 +131,42 @@ function renderClassListInSettings() {
         });
     });
 }
-
-// โหลดรายการใบงานพร้อมปุ่มลบในโหมดครู
 function renderWorkListInSettings(classId) {
-const list = document.getElementById('existing-works-list');
-list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลดรายการงาน...</div>';
+    const list = document.getElementById('existing-works-list');
+    if (!list) return;
+    
+    list.innerHTML = '<div class="p-2 text-center text-muted small">⏳ กำลังโหลดรายการใบงาน...</div>';
 
-fetch(`${API_URL}?action=getAssignments&classId=${classId}`)
-.then(res => res.json())
-.then(data => {
-list.innerHTML = '';
-if(data.length === 0) list.innerHTML = '<div class="p-2 text-center text-muted small">ไม่มีงานในห้องนี้</div>';
-data.forEach(work => {
-const div = document.createElement('div');
-div.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
-div.innerHTML = `
-<small>${work.title} (${work.points} ค.)</small>
-<i class="bi bi-trash3-fill text-danger btn-delete" onclick="handleDeleteWork('${work.id}', '${work.title}')"></i>
-`;
-list.appendChild(div);
-});
-});
+    // ดึงข้อมูลใหม่จาก Server
+    fetch(`${API_URL}?action=getAssignments&classId=${encodeURIComponent(classId)}`)
+    .then(res => res.json())
+    .then(data => {
+        list.innerHTML = ''; // ล้างสถานะกำลังโหลด
+        
+        if (!data || data.length === 0) {
+            list.innerHTML = '<div class="p-2 text-center text-muted small">⚠️ ยังไม่มีใบงานในห้องนี้</div>';
+            return;
+        }
+
+        data.forEach(work => {
+            const div = document.createElement('div');
+            div.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
+            // ปรับขนาดตัวอักษรให้ดูสะอาดตา (Minimalist) ตามที่แจ้งไว้
+            div.innerHTML = `
+                <div class="d-flex flex-column">
+                    <span class="fw-bold" style="font-size: 0.9rem;">${work.title}</span>
+                    <small class="text-muted" style="font-size: 0.75rem;">คะแนนเต็ม: ${work.points} ค.</small>
+                </div>
+                <i class="bi bi-trash3-fill text-danger" style="cursor:pointer; font-size: 1.1rem;" 
+                   onclick="handleDeleteWork('${work.id}', '${work.title}')"></i>
+            `;
+            list.appendChild(div);
+        });
+    })
+    .catch(err => {
+        list.innerHTML = '<div class="p-2 text-center text-danger small">❌ โหลดล้มเหลว กรุณาลองใหม่</div>';
+        console.error("Fetch Error:", err);
+    });
 }
 
 // เพิ่มการเรียกโหลดห้องเมื่อปลดล็อกโหมดครู
@@ -187,28 +202,42 @@ renderClassButtons(level);
 } catch (e) { alert("ล้มเหลว: " + e.message); }
 }
 
-// แก้ไขบรรทัดที่ 131 เป็นต้นไป
 async function addNewAssignment() {
     const asgnName = document.getElementById('new-assignment').value;
-    const asgnScore = document.getElementById('new-assignment-score').value; // ดึงคะแนนเต็มจาก input ใหม่
+    const asgnScore = document.getElementById('new-assignment-score').value || 10; // ดึงคะแนนเต็ม (ถ้าว่างให้เป็น 10)
     
-    if (!currentClassId) return alert("กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
-    if (!asgnName) return alert("กรุณากรอกชื่อใบงาน");
+    if (!currentClassId) return alert("❌ กรุณาเลือกห้องเรียนก่อนเพิ่มงาน");
+    if (!asgnName) return alert("❌ กรุณากรอกชื่อใบงาน");
 
     const params = new URLSearchParams();
     params.append('action', 'addNewAssignment');
-    params.append('classId', currentClassId);
+    params.append('classId', currentClassId); // ส่งค่า ID ห้อง (เช่น ปวช 1/1)
     params.append('assignmentName', asgnName);
-    params.append('points', asgnScore); // เพิ่มการส่งค่าคะแนนเต็มไปด้วย
+    params.append('points', asgnScore);
 
     try {
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
+        // บันทึกข้อมูลไปยัง Google Sheets
+        // ใช้ fetch แบบ POST เพื่อความปลอดภัยและรองรับข้อมูลจำนวนมาก
+        await fetch(API_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: params 
+        });
+        
         alert("✅ เพิ่มใบงาน: " + asgnName + " เรียบร้อยแล้ว");
-        // ไม่ต้อง closeTeacherSection เพื่อให้ตั้งค่าต่อได้สะดวก
-        loadAssignments(currentClassId);
-        renderWorkListInSettings(currentClassId); // อัปเดตรายการงานในหน้าตั้งค่าด้วย
-    } catch (e) { alert("❌ เกิดข้อผิดพลาด"); }
+        
+        // ล้างช่องกรอกข้อมูลเดิม
+        document.getElementById('new-assignment').value = '';
+        
+        // --- ส่วนสำคัญ: สั่ง Refresh ข้อมูลใหม่ทันทีโดยไม่ต้องรีโหลดหน้าเว็บ ---
+        renderWorkListInSettings(currentClassId); // อัปเดตรายการในหน้าโหมดครู (ที่มีปุ่มถังขยะ)
+        loadAssignments(currentClassId);          // อัปเดต Dropdown ในโหมดสแกนเนอร์
+        
+    } catch (e) { 
+        alert("❌ เกิดข้อผิดพลาดในการบันทึก: " + e.message); 
+    }
 }
+
 async function loadAssignments(classId) {
 const select = document.getElementById('assignment-select');
 if(!select) return;
@@ -406,18 +435,26 @@ async function handleDeleteClass(id) {
     }
 }
 
-// ปรับปรุงฟังก์ชันลบใบงาน
 async function handleDeleteWork(id, name) {
-    if (confirm(`ยืนยันการลบใบงาน "${name}"?`)) {
-        const params = new URLSearchParams({ action: 'deleteAssignment', assignmentId: id });
+    if (confirm(`คุณครูยืนยันที่จะลบใบงาน "${name}" หรือไม่?\n(ข้อมูลคะแนนที่เคยบันทึกไว้จะไม่หายไปจากระบบ)`)) {
+        const params = new URLSearchParams({ 
+            action: 'deleteAssignment', 
+            assignmentId: id 
+        });
+        
         try {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
             alert("✅ ลบใบงานเรียบร้อย");
+            
+            // สั่งโหลดรายการใหม่ทันที
             renderWorkListInSettings(currentClassId);
             loadAssignments(currentClassId);
-        } catch (e) { alert("ล้มเหลว: " + e.message); }
+        } catch (e) { 
+            alert("ล้มเหลว: " + e.message); 
+        }
     }
 }
+
 // ระบบเสียงพูด (เพิ่มเข้าไปใน onScanSuccess)
 function speakStatus(text) {
     if ('speechSynthesis' in window) {
