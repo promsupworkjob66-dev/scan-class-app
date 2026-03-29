@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyGlduDEijkbZjjupJ9P2_-Cv5bAYi7FZc-dKq-BGpN6o47b9Y5obGQHvOwz8_FHLw2/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyaM5q1XW8Xn1N3iye5d0F0ufhzgYZEkS1fSX4qwj_7odh_OGPPF-Ztm0Zd_DvaDOF_/exec";
 
 let html5QrCode;
 let comparisonChart;
@@ -109,25 +109,27 @@ loadAssignments(classId);
 loadScoreSummary();
 }
 
-// โหลดรายการห้องเรียนพร้อมปุ่มลบในโหมดครู
+// ฟังก์ชันโหลดรายการห้องในหน้าตั้งค่า
 function renderClassListInSettings() {
-const list = document.getElementById('existing-classes-list');
-list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลด...</div>';
+    const list = document.getElementById('existing-classes-list');
+    if(!list) return; // ป้องกัน Error ถ้าไม่มี Element นี้
+    list.innerHTML = '<div class="p-2 text-center text-muted small">กำลังโหลด...</div>';
 
-fetch(`${API_URL}?action=getClasses`)
-.then(res => res.json())
-.then(data => {
-list.innerHTML = '';
-data.forEach(item => {
-const div = document.createElement('div');
-div.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
-div.innerHTML = `
-<span style="cursor:pointer" onclick="selectClass('${item.id}', null)">${item.level} ${item.name}</span>
-<i class="bi bi-trash3-fill text-danger btn-delete" onclick="handleDeleteClass('${item.id}')"></i>
-`;
-list.appendChild(div);
-});
-});
+    fetch(`${API_URL}?action=getClasses`)
+    .then(res => res.json())
+    .then(data => {
+        list.innerHTML = '';
+        if(data.length === 0) list.innerHTML = '<div class="p-2 text-center text-muted">ไม่พบข้อมูลห้อง</div>';
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+            div.innerHTML = `
+                <span style="cursor:pointer" onclick="selectClass('${item.id}', null)">${item.id}</span>
+                <i class="bi bi-trash3-fill text-danger" style="cursor:pointer" onclick="handleDeleteClass('${item.id}')"></i>
+            `;
+            list.appendChild(div);
+        });
+    });
 }
 
 // โหลดรายการใบงานพร้อมปุ่มลบในโหมดครู
