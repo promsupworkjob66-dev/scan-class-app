@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyaM5q1XW8Xn1N3iye5d0F0ufhzgYZEkS1fSX4qwj_7odh_OGPPF-Ztm0Zd_DvaDOF_/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzrQbY6r_f7G17IApm0MOrckWJvBZ1bngKRQ7wGLIg0DockXrodiR2HWwfy9i-xzWRY/exec";
 
 let html5QrCode;
 let comparisonChart;
@@ -393,39 +393,31 @@ if(sync) sync.style.display = 'none';
 // <span class="btn-delete" onclick="handleDeleteClass('ปวช 1/1')"><i class="fas fa-trash"></i></span>
 
 
-// ฟังก์ชันลบห้องเรียน
+// ปรับปรุงฟังก์ชันลบห้องเรียนให้แสดงผลทันที
 async function handleDeleteClass(id) {
-    if (confirm(`⚠️ ยืนยันการลบห้อง ${id}?\nนักเรียนและประวัติทั้งหมดจะถูกลบถาวร!`)) {
-        const params = new URLSearchParams();
-        params.append('action', 'deleteClass');
-        params.append('classId', id);
-
+    if (confirm(`⚠️ ยืนยันการลบห้อง ${id}?`)) {
+        const params = new URLSearchParams({ action: 'deleteClass', classId: id });
         try {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-            alert("✅ ส่งคำสั่งลบห้องเรียนแล้ว");
-            // โหลดข้อมูลใหม่ทันทีโดยไม่ต้อง Refresh หน้าเว็บ
-            renderClassListInSettings(); 
-            filterLevel('ปวช'); 
+            alert("✅ ลบเรียบร้อย");
+            renderClassListInSettings(); // อัปเดตรายการในหน้าตั้งค่า
+            filterLevel(document.querySelector('#levelTab .active').innerText.includes('ปวช') ? 'ปวช' : 'ปวส');
         } catch (e) { alert("ล้มเหลว: " + e.message); }
     }
 }
 
-// ฟังก์ชันลบใบงาน
+// ปรับปรุงฟังก์ชันลบใบงาน
 async function handleDeleteWork(id, name) {
-    if (confirm(`ยืนยันการลบใบงาน "${name}"?\nคะแนนทั้งหมดจะหายไป`)) {
-        const params = new URLSearchParams();
-        params.append('action', 'deleteAssignment');
-        params.append('assignmentId', id);
-
+    if (confirm(`ยืนยันการลบใบงาน "${name}"?`)) {
+        const params = new URLSearchParams({ action: 'deleteAssignment', assignmentId: id });
         try {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: params });
-            alert("✅ ส่งคำสั่งลบใบงานแล้ว");
+            alert("✅ ลบใบงานเรียบร้อย");
             renderWorkListInSettings(currentClassId);
             loadAssignments(currentClassId);
         } catch (e) { alert("ล้มเหลว: " + e.message); }
     }
 }
-
 // ระบบเสียงพูด (เพิ่มเข้าไปใน onScanSuccess)
 function speakStatus(text) {
     if ('speechSynthesis' in window) {
